@@ -2044,10 +2044,6 @@ const ui = {
             if (State.isFlipped) {
                 showBtn?.classList.add('hidden');
                 ratingPanel?.classList.remove('hidden');
-                // Auto-read mặt sau nếu bật
-                if (State.settings.ttsAuto) {
-                    setTimeout(() => app.ttsRead('back'), 300);
-                }
             } else {
                 showBtn?.classList.remove('hidden');
                 ratingPanel?.classList.add('hidden');
