@@ -213,6 +213,22 @@
         /* Auto-speak toggle */
         .tts-toggle { transition: all 0.2s; }
         .tts-toggle.on { color: #818CF8; }
+
+        /* ═══ SOUND EFFECTS FEEDBACK ═══ */
+        @keyframes correctFlash {
+            0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+            50%  { box-shadow: 0 0 0 16px rgba(16,185,129,0); }
+            100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+        }
+        @keyframes wrongShake {
+            0%,100% { transform: translateX(0); }
+            20%     { transform: translateX(-6px); }
+            40%     { transform: translateX(6px); }
+            60%     { transform: translateX(-4px); }
+            80%     { transform: translateX(4px); }
+        }
+        .sfx-correct { animation: correctFlash 0.5s ease-out; }
+        .sfx-wrong   { animation: wrongShake 0.4s ease-in-out; }
     </style>
 </head>
 <body class="h-screen w-full flex justify-center" style="background-color:var(--bg)">
@@ -1137,10 +1153,28 @@
                         <select id="tts-voice-select" onchange="app.ttsSelectVoice(this.value)" class="w-full px-3 py-2 surface2 border border-theme rounded-lg text-sm text-main focus:ring-2 focus:ring-indigo-400 outline-none"></select>
                         <p class="text-xs text-sub mt-1">Chỉ hiển thị giọng tiếng Anh. Giọng Samantha/Karen = giọng Mỹ chuẩn.</p>
                     </div>
-                    <!-- Test button -->
-                    <button onclick="app.ttsTest()" class="w-full py-2.5 surface2 border border-theme rounded-xl text-sm font-semibold text-main hover:bg-indigo-50 transition flex items-center justify-center gap-2">
-                        <i class="fas fa-play text-indigo-500"></i> Thử giọng đọc
-                    </button>
+                    <!-- Test + Sound FX buttons -->
+                    <div class="flex gap-2">
+                        <button onclick="app.ttsTest()" class="flex-1 py-2.5 surface2 border border-theme rounded-xl text-sm font-semibold text-main hover:bg-indigo-50 transition flex items-center justify-center gap-2">
+                            <i class="fas fa-play text-indigo-500"></i> Thử đọc
+                        </button>
+                        <button onclick="SFX.correct()" class="flex-1 py-2.5 bg-green-50 border border-green-200 rounded-xl text-sm font-semibold text-green-700 hover:bg-green-100 transition flex items-center justify-center gap-1.5">
+                            ✅ Thử đúng
+                        </button>
+                        <button onclick="SFX.wrong()" class="flex-1 py-2.5 bg-red-50 border border-red-200 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-100 transition flex items-center justify-center gap-1.5">
+                            ❌ Thử sai
+                        </button>
+                    </div>
+                    <!-- Sound FX toggle -->
+                    <div class="flex items-center justify-between pt-1">
+                        <div>
+                            <p class="text-sm font-medium text-main">Âm thanh đúng/sai</p>
+                            <p class="text-xs text-sub">Hiệu ứng âm thanh khi trả lời</p>
+                        </div>
+                        <button onclick="app.sfxToggle()" id="sfx-toggle" class="w-12 h-6 rounded-full bg-green-500 relative transition-colors duration-300 focus:outline-none">
+                            <span id="sfx-thumb" class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-300" style="transform:translateX(24px)"></span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -2653,6 +2687,8 @@ const app = {
 
     rateStudyCard(rating) {
         // rating: 1=again, 2=hard, 3=good, 4=easy
+        // 🔔 Sound feedback
+        if (rating >= 3) SFX.correct(); else SFX.wrong();
         const idx=State.currentCardIndex;
         State.ankiRatings[idx]=rating;
 
@@ -2905,6 +2941,9 @@ const app = {
         const realCard = topic?.cards.find(c=>c.id===card.id);
         if (realCard) { SRS.update(realCard, isCorrect ? 3 : 1); utils.saveData(); }
 
+        // 🔔 Sound + visual feedback
+        if (isCorrect) SFX.correct(); else SFX.wrong();
+
         // Scoring
         if (isCorrect) {
             f.correct++;
@@ -3131,6 +3170,9 @@ const app = {
         State.isAnswered=true;
         const allBtns=document.querySelectorAll('.quiz-opt-btn');
         State.game.totalAnswered++;
+        // 🔔 Sound + visual feedback
+        if (isOk) { SFX.correct(); btnEl.classList.add('sfx-correct'); }
+        else       { SFX.wrong();   btnEl.classList.add('sfx-wrong'); }
         if (isOk) {
             State.quizScore++; State.game.totalCorrect++;
             document.getElementById('quiz-score').innerText=State.quizScore;
@@ -3848,6 +3890,153 @@ ui.renderSettings = function() {
             }
         }
     }
+};
+
+// ═══════════════════════════════════════════════════════════
+//  SOUND EFFECTS  (Web Audio API — không cần file âm thanh)
+// ═══════════════════════════════════════════════════════════
+const SFX = {
+    _ctx: null,
+
+    _ac() {
+        if (!this._ctx) {
+            this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this._ctx.state === 'suspended') this._ctx.resume();
+        return this._ctx;
+    },
+
+    // Tạo 1 nốt: freq Hz, bắt đầu t giây từ now, kéo dài dur giây
+    _note(freq, t, dur, type = 'sine', vol = 0.28) {
+        const ac  = this._ac();
+        const osc = ac.createOscillator();
+        const g   = ac.createGain();
+        osc.connect(g); g.connect(ac.destination);
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, t);
+        g.gain.setValueAtTime(vol, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+        osc.start(t); osc.stop(t + dur + 0.05);
+    },
+
+    // Tiếng nổ nhẹ (percussive kick)
+    _kick(t, vol = 0.25) {
+        const ac  = this._ac();
+        const osc = ac.createOscillator();
+        const g   = ac.createGain();
+        osc.connect(g); g.connect(ac.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(180, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.08);
+        g.gain.setValueAtTime(vol, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        osc.start(t); osc.stop(t + 0.13);
+    },
+
+    // ✅ ĐÚNG — vui nhộn: kick + arpeggio C5 E5 G5 C6 + shimmer cao
+    correct() {
+        if (!this._enabled()) return;
+        const ac  = this._ac();
+        const now = ac.currentTime;
+
+        // Kick drum
+        this._kick(now, 0.3);
+
+        // Arpeggio tăng dần: Do Mi Sol Do (nốt sáng)
+        const notes = [523, 659, 784, 1047];
+        notes.forEach((f, i) => {
+            this._note(f, now + 0.04 + i * 0.09, 0.18, 'sine', 0.22);
+        });
+
+        // Shimmer cao cuối (hiệu ứng "sparkle")
+        this._note(2093, now + 0.45, 0.25, 'sine', 0.1);
+        this._note(2637, now + 0.5,  0.2,  'sine', 0.07);
+    },
+
+    // ❌ SAI — buồn: "wah wah" trombone rớt xuống
+    wrong() {
+        if (!this._enabled()) return;
+        const ac  = this._ac();
+        const now = ac.currentTime;
+
+        // Wah wah wah — 3 nốt rớt xuống với vibrato nhẹ
+        const wah = [
+            { f: 380, t: 0,    d: 0.15, type: 'sawtooth', v: 0.22 },
+            { f: 300, t: 0.17, d: 0.15, type: 'sawtooth', v: 0.20 },
+            { f: 220, t: 0.34, d: 0.35, type: 'sawtooth', v: 0.16 },
+        ];
+        wah.forEach(n => {
+            const ac2 = this._ac();
+            const osc = ac2.createOscillator();
+            const g   = ac2.createGain();
+            // LFO cho vibrato
+            const lfo  = ac2.createOscillator();
+            const lfoG = ac2.createGain();
+            lfo.frequency.value = 5;
+            lfoG.gain.value = 8;
+            lfo.connect(lfoG); lfoG.connect(osc.frequency);
+            osc.connect(g); g.connect(ac2.destination);
+            osc.type = n.type;
+            osc.frequency.setValueAtTime(n.f, now + n.t);
+            g.gain.setValueAtTime(n.v, now + n.t);
+            g.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+            lfo.start(now + n.t); lfo.stop(now + n.t + n.d + 0.05);
+            osc.start(now + n.t); osc.stop(now + n.t + n.d + 0.05);
+        });
+    },
+
+    // Âm thanh import thành công — vui nhẹ
+    importOk(count) {
+        if (!this._enabled()) return;
+        const ac  = this._ac();
+        const now = ac.currentTime;
+        // Ba nốt nhanh tăng dần
+        [440, 554, 659].forEach((f, i) => {
+            this._note(f, now + i * 0.07, 0.12, 'triangle', 0.2);
+        });
+        // "Ping" cuối nếu nhiều thẻ
+        if (count >= 10) this._note(880, now + 0.28, 0.2, 'sine', 0.12);
+    },
+
+    // Âm thanh sync GS thành công
+    syncOk() {
+        if (!this._enabled()) return;
+        const ac  = this._ac();
+        const now = ac.currentTime;
+        this._note(659, now,        0.1, 'sine', 0.18);
+        this._note(880, now + 0.1,  0.1, 'sine', 0.15);
+        this._note(1047, now + 0.2, 0.18,'sine', 0.12);
+    },
+
+    // Kiểm tra setting
+    _enabled() {
+        // Mặc định bật, trừ khi user tắt
+        return State.settings.sfxEnabled !== false;
+    }
+};
+
+// Thêm sfxToggle vào app
+app.sfxToggle = function() {
+    State.settings.sfxEnabled = State.settings.sfxEnabled === false ? true : false;
+    utils.saveSets();
+    const on = State.settings.sfxEnabled !== false;
+    const toggle = document.getElementById('sfx-toggle');
+    const thumb  = document.getElementById('sfx-thumb');
+    if (toggle) toggle.style.background = on ? '#10B981' : '#9CA3AF';
+    if (thumb)  thumb.style.transform   = on ? 'translateX(24px)' : 'translateX(0)';
+    if (on) SFX.correct(); // Preview
+    utils.showToast(on ? '🔔 Âm thanh: BẬT' : '🔕 Âm thanh: TẮT');
+};
+
+// Render sfx toggle state khi vào settings
+const _origRenderSettingsTTS = ui.renderSettings.bind(ui);
+ui.renderSettings = function() {
+    _origRenderSettingsTTS();
+    const on     = State.settings.sfxEnabled !== false;
+    const toggle = document.getElementById('sfx-toggle');
+    const thumb  = document.getElementById('sfx-thumb');
+    if (toggle) toggle.style.background = on ? '#10B981' : '#9CA3AF';
+    if (thumb)  thumb.style.transform   = on ? 'translateX(24px)' : 'translateX(0)';
 };
 
 window.onload = () => {
