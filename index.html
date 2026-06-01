@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Học cùng thầy Lực</title>
+    <title>Flashcard Master v3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -178,6 +178,41 @@
         /* Flip hint pulse */
         @keyframes flipHint { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .flip-hint { animation: flipHint 2s ease-in-out 2; }
+
+        /* ═══ TTS SPEAKER ═══ */
+        .tts-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.15); border: none; cursor: pointer;
+            transition: all 0.2s; flex-shrink: 0; color: white;
+        }
+        .tts-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+        .tts-btn:active { transform: scale(0.92); }
+        .tts-btn.speaking { background: rgba(99,102,241,0.5); }
+        /* On white card background */
+        .tts-btn-card {
+            position: absolute; top: 8px; right: 8px;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(0,0,0,0.06); border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; color: #6B7280; z-index: 5;
+        }
+        .tts-btn-card:hover { background: rgba(99,102,241,0.15); color: #4F46E5; }
+        .tts-btn-card.speaking { background: #4F46E5; color: white; }
+        body.dark .tts-btn-card { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+        body.dark .tts-btn-card:hover { background: rgba(99,102,241,0.3); color: white; }
+
+        /* Sound wave animation when speaking */
+        @keyframes soundWave {
+            0%,100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.6); }
+        }
+        .tts-btn.speaking i,
+        .tts-btn-card.speaking i { animation: soundWave 0.5s ease-in-out infinite; }
+
+        /* Auto-speak toggle */
+        .tts-toggle { transition: all 0.2s; }
+        .tts-toggle.on { color: #818CF8; }
     </style>
 </head>
 <body class="h-screen w-full flex justify-center" style="background-color:var(--bg)">
@@ -191,7 +226,7 @@
         <button id="back-btn" class="hidden text-white p-2 rounded-full hover:bg-white/20 transition">
             <i class="fas fa-arrow-left text-lg"></i>
         </button>
-        <h1 id="header-title" class="text-lg font-bold flex-1 text-center">Thầy Vũ Tiến Lực 0969068849</h1>
+        <h1 id="header-title" class="text-lg font-bold flex-1 text-center">Flashcard Master</h1>
         <div class="w-10"></div>
     </header>
 
@@ -296,11 +331,17 @@
                 <div id="review-card-inner" class="w-full h-full relative transform-style-3d flashcard-inner rounded-2xl shadow-2xl">
                     <div class="card-front absolute w-full h-full backface-hidden bg-white rounded-2xl flex flex-col items-center justify-center p-6 text-center border-4 border-indigo-100">
                         <span class="absolute top-4 left-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Câu hỏi</span>
+                        <button class="tts-btn-card" id="tts-review-front" onclick="event.stopPropagation();app.ttsReadEl('review-front-text')" title="Đọc tiếng Anh">
+                            <i class="fas fa-volume-up text-xs"></i>
+                        </button>
                         <p id="review-front-text" class="text-2xl font-bold text-gray-800 break-words w-full">...</p>
                         <p class="absolute bottom-4 text-xs text-gray-400"><i class="fas fa-hand-pointer mr-1"></i>Chạm để xem đáp án</p>
                     </div>
                     <div class="card-back absolute w-full h-full backface-hidden bg-cyan-50 rounded-2xl flex flex-col items-center justify-center p-6 text-center border-4 border-cyan-300 rotate-y-180">
                         <span class="absolute top-4 left-4 text-xs font-bold text-cyan-600 uppercase tracking-wider">Đáp án</span>
+                        <button class="tts-btn-card" id="tts-review-back" onclick="event.stopPropagation();app.ttsReadEl('review-back-text')" title="Đọc tiếng Anh">
+                            <i class="fas fa-volume-up text-xs"></i>
+                        </button>
                         <p id="review-back-text" class="text-xl font-medium text-gray-800 break-words w-full overflow-y-auto max-h-[65%]">...</p>
                     </div>
                 </div>
@@ -477,9 +518,15 @@
             <div class="flex-shrink-0 px-4 pt-3 pb-2">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex gap-1.5 overflow-x-auto no-scrollbar" id="study-mode-chips"></div>
-                    <button onclick="app.shuffleCards()" class="flex-shrink-0 text-white/40 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition ml-2">
-                        <i class="fas fa-random text-xs"></i>
-                    </button>
+                    <div class="flex gap-1 ml-2">
+                        <!-- Auto-read toggle -->
+                        <button onclick="app.ttsToggleAuto()" id="tts-auto-btn" title="Tự động đọc" class="tts-btn tts-toggle">
+                            <i class="fas fa-volume-up text-xs"></i>
+                        </button>
+                        <button onclick="app.shuffleCards()" class="tts-btn" title="Trộn thẻ">
+                            <i class="fas fa-random text-xs"></i>
+                        </button>
+                    </div>
                 </div>
                 <!-- Progress bar -->
                 <div class="flex items-center gap-2">
@@ -503,6 +550,9 @@
                         <!-- Front -->
                         <div class="card-front absolute w-full h-full backface-hidden bg-white rounded-2xl flex flex-col items-center justify-center px-5 py-4 text-center border-4 border-indigo-100">
                             <span class="absolute top-2.5 left-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mặt Trước</span>
+                            <button class="tts-btn-card" id="tts-study-front" onclick="event.stopPropagation();app.ttsRead('front')" title="Đọc tiếng Anh">
+                                <i class="fas fa-volume-up text-xs"></i>
+                            </button>
                             <div id="study-front-text" class="font-bold text-gray-800 break-words w-full math-content overflow-y-auto leading-snug" style="font-size:clamp(14px,4vw,22px);max-height:110px">Câu hỏi</div>
                             <p class="absolute bottom-2 text-[10px] text-gray-300 flip-hint flex items-center gap-1">
                                 <i class="fas fa-hand-pointer"></i>Chạm hoặc <span class="kbd">Space</span>
@@ -511,6 +561,9 @@
                         <!-- Back -->
                         <div class="card-back absolute w-full h-full backface-hidden bg-indigo-50 rounded-2xl flex flex-col items-center justify-center px-5 py-4 text-center border-4 border-indigo-300 rotate-y-180">
                             <span class="absolute top-2.5 left-3 text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Mặt Sau</span>
+                            <button class="tts-btn-card" id="tts-study-back" onclick="event.stopPropagation();app.ttsRead('back')" title="Đọc tiếng Anh">
+                                <i class="fas fa-volume-up text-xs"></i>
+                            </button>
                             <div id="study-back-text" class="font-medium text-gray-800 break-words w-full math-content overflow-y-auto leading-snug" style="font-size:clamp(13px,3.5vw,19px);max-height:120px">Đáp án</div>
                         </div>
                     </div>
@@ -1043,13 +1096,50 @@
             <!-- Appearance -->
             <div class="surface rounded-2xl shadow-sm border border-theme p-4 mb-4">
                 <h3 class="font-bold text-main mb-3 text-sm flex items-center gap-2"><i class="fas fa-palette text-indigo-500"></i> Giao diện</h3>
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-4">
                     <div>
                         <p class="text-sm font-medium text-main">Chế độ tối</p>
                         <p class="text-xs text-sub">Dịu mắt khi học ban đêm</p>
                     </div>
                     <button onclick="app.toggleDarkMode()" id="dark-mode-toggle" class="w-12 h-6 rounded-full bg-gray-200 relative transition-colors duration-300 focus:outline-none">
                         <span id="dark-mode-thumb" class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-300"></span>
+                    </button>
+                </div>
+
+                <!-- TTS Settings -->
+                <div class="border-t border-theme pt-4 space-y-3">
+                    <h4 class="text-xs font-bold text-sub uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fas fa-volume-up text-indigo-500"></i> Đọc thẻ (Text-to-Speech)
+                    </h4>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-main">Tự động đọc khi lật thẻ</p>
+                            <p class="text-xs text-sub">Đọc mặt sau sau khi lật — giọng Mỹ, tốc độ chậm</p>
+                        </div>
+                        <button onclick="app.ttsToggleAuto()" id="tts-auto-toggle-settings" class="w-12 h-6 rounded-full bg-gray-200 relative transition-colors duration-300 focus:outline-none">
+                            <span id="tts-auto-thumb-settings" class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-300"></span>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-main">Tốc độ đọc</p>
+                            <p class="text-xs text-sub" id="tts-rate-label">Chậm (0.75×)</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="app.ttsAdjustRate(-0.1)" class="w-7 h-7 rounded-full surface2 border border-theme text-main font-bold flex items-center justify-center text-sm">−</button>
+                            <span id="tts-rate-display" class="text-main font-bold w-10 text-center text-sm">0.75</span>
+                            <button onclick="app.ttsAdjustRate(0.1)" class="w-7 h-7 rounded-full surface2 border border-theme text-main font-bold flex items-center justify-center text-sm">+</button>
+                        </div>
+                    </div>
+                    <!-- Voice picker -->
+                    <div>
+                        <p class="text-sm font-medium text-main mb-1.5">Giọng đọc (en-US)</p>
+                        <select id="tts-voice-select" onchange="app.ttsSelectVoice(this.value)" class="w-full px-3 py-2 surface2 border border-theme rounded-lg text-sm text-main focus:ring-2 focus:ring-indigo-400 outline-none"></select>
+                        <p class="text-xs text-sub mt-1">Chỉ hiển thị giọng tiếng Anh. Giọng Samantha/Karen = giọng Mỹ chuẩn.</p>
+                    </div>
+                    <!-- Test button -->
+                    <button onclick="app.ttsTest()" class="w-full py-2.5 surface2 border border-theme rounded-xl text-sm font-semibold text-main hover:bg-indigo-50 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-play text-indigo-500"></i> Thử giọng đọc
                     </button>
                 </div>
             </div>
@@ -1200,7 +1290,7 @@
             <!-- App info -->
             <div class="surface rounded-2xl shadow-sm border border-theme p-4 text-center">
                 <p class="text-2xl mb-1">🎓</p>
-                <p class="font-bold text-main">Thầy Vũ Tiến Lực 0969068849 v3</p>
+                <p class="font-bold text-main">Flashcard Master v3</p>
                 <p class="text-xs text-sub mt-1">Được nâng cấp với Spaced Repetition, Gamification,<br>Thống kê chi tiết & Export/Import</p>
             </div>
         </div>
@@ -1445,8 +1535,11 @@ const utils = {
     loadSettings() {
         const s = localStorage.getItem(State.SETK);
         if (s) { try { State.settings = JSON.parse(s); } catch(e) { State.settings={}; } }
-        State.settings.maxReview = State.settings.maxReview || 20;
-        State.settings.darkMode  = State.settings.darkMode  || false;
+        State.settings.maxReview    = State.settings.maxReview    || 20;
+        State.settings.darkMode     = State.settings.darkMode     || false;
+        State.settings.ttsAuto      = State.settings.ttsAuto      || false;
+        State.settings.ttsRate      = State.settings.ttsRate      || 0.75;
+        State.settings.ttsVoiceName = State.settings.ttsVoiceName || '';
     },
 
     addXP(amount) {
@@ -1577,7 +1670,7 @@ const utils = {
 const ui = {
     screens: ['home','review','review-done','topic-detail','study-flashcard','study-quiz','study-fill','quiz-result','tips','stats','settings'],
 
-    switchScreen(id, title='Thầy Vũ Tiến Lực 0969068849', showBack=false) {
+    switchScreen(id, title='Flashcard Master', showBack=false) {
         ui.screens.forEach(s => {
             const el = document.getElementById(`screen-${s}`);
             if (el) { el.classList.remove('screen-active'); el.classList.add('screen-hidden'); }
@@ -1595,7 +1688,7 @@ const ui = {
         State.activeTab = tab;
         document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
         document.getElementById(`nav-${tab}`).classList.add('active');
-        if (tab==='home')     { ui.renderHome(); ui.switchScreen('home','Thầy Vũ Tiến Lực 0969068849'); }
+        if (tab==='home')     { ui.renderHome(); ui.switchScreen('home','Flashcard Master'); }
         if (tab==='tips')     { ui.switchScreen('tips','💡 Tips & Hướng dẫn'); }
         if (tab==='stats')    { ui.renderStats(); ui.switchScreen('stats','Thống kê'); }
         if (tab==='settings') { ui.renderSettings(); ui.switchScreen('settings','Cài đặt'); }
@@ -1826,6 +1919,7 @@ const ui = {
 
     // ─── SETTINGS ────────────────────────────
     renderSettings() {
+        app._ttsInitSettings();
         const s = State.settings;
         document.getElementById('max-review-display').innerText = s.maxReview;
         const toggle = document.getElementById('dark-mode-toggle');
@@ -1911,11 +2005,15 @@ const ui = {
         State.isFlipped = !State.isFlipped;
         State.isFlipped ? inner.classList.add('rotate-y-180') : inner.classList.remove('rotate-y-180');
         if (State.studyMode !== 'browse') {
-            const showBtn    = document.getElementById('anki-show-answer');
+            const showBtn     = document.getElementById('anki-show-answer');
             const ratingPanel = document.getElementById('anki-rating-panel');
             if (State.isFlipped) {
                 showBtn?.classList.add('hidden');
                 ratingPanel?.classList.remove('hidden');
+                // Auto-read mặt sau nếu bật
+                if (State.settings.ttsAuto) {
+                    setTimeout(() => app.ttsRead('back'), 300);
+                }
             } else {
                 showBtn?.classList.remove('hidden');
                 ratingPanel?.classList.add('hidden');
@@ -2547,6 +2645,10 @@ const app = {
         document.getElementById('swipe-again').style.opacity='0';
         document.getElementById('swipe-easy').style.opacity='0';
         setTimeout(()=>{ inner.style.transition='transform 0.6s cubic-bezier(0.4,0.2,0.2,1)'; },50);
+        // Auto-read mặt trước khi thẻ mới xuất hiện
+        if (State.settings.ttsAuto) {
+            setTimeout(()=> app.ttsRead('front'), 400);
+        }
     },
 
     rateStudyCard(rating) {
@@ -3082,6 +3184,167 @@ const app = {
         }
     },
 
+    // ═══════════════════════════════════════════
+    //  TEXT-TO-SPEECH (TTS)
+    // ═══════════════════════════════════════════
+    _ttsCurrentBtn: null,   // nút đang hiển thị trạng thái speaking
+
+    // Làm sạch text trước khi đọc
+    ttsClean(text) {
+        return text
+            .replace(/\$\$[\s\S]*?\$\$/g, '')      // xoá $$...$$
+            .replace(/\$[^$\n]+\$/g, '')            // xoá $...$
+            .replace(/\[([^\]]+)\]/g, '$1')         // [answer] → answer
+            .replace(/[#*_`~>]/g, '')               // xoá markdown
+            .replace(/https?:\/\/\S+/g, '')         // xoá URL
+            .replace(/\s+/g, ' ')
+            .trim();
+    },
+
+    // Lấy giọng en-US tốt nhất
+    _getBestUSVoice() {
+        const voices = window.speechSynthesis.getVoices();
+        const enUS   = voices.filter(v => v.lang === 'en-US' || v.lang === 'en_US');
+        if (!enUS.length) return null;
+        // Ưu tiên: Samantha > Karen > Google US > bất kỳ en-US
+        const preferred = ['Samantha','Karen','Google US English','Microsoft Aria','Zira'];
+        for (const name of preferred) {
+            const v = enUS.find(v => v.name.includes(name));
+            if (v) return v;
+        }
+        // Lấy giọng đã chọn trong settings
+        const saved = State.settings.ttsVoiceName;
+        if (saved) { const v=enUS.find(v=>v.name===saved); if(v) return v; }
+        return enUS[0];
+    },
+
+    // Đọc text (core function)
+    ttsSpeak(text, btnEl=null) {
+        if (!window.speechSynthesis) { utils.showToast('Trình duyệt không hỗ trợ TTS','error'); return; }
+        const clean = app.ttsClean(text);
+        if (!clean) return;
+
+        // Nếu đang đọc cùng 1 nút → dừng lại
+        if (app._ttsCurrentBtn === btnEl && window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            app._ttsSetSpeaking(false, btnEl);
+            app._ttsCurrentBtn = null;
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+        app._ttsSetSpeaking(false, app._ttsCurrentBtn);
+
+        const utt  = new SpeechSynthesisUtterance(clean);
+        utt.lang   = 'en-US';
+        utt.rate   = parseFloat(State.settings.ttsRate) || 0.75;
+        utt.pitch  = 1;
+        utt.volume = 1;
+
+        const voice = app._getBestUSVoice();
+        if (voice) utt.voice = voice;
+
+        app._ttsCurrentBtn = btnEl;
+        app._ttsSetSpeaking(true, btnEl);
+
+        utt.onend = utt.onerror = () => {
+            app._ttsSetSpeaking(false, btnEl);
+            app._ttsCurrentBtn = null;
+        };
+
+        // Chrome bug: speech stops after ~15s without this
+        window.speechSynthesis.speak(utt);
+        // workaround for Chrome
+        const keepAlive = setInterval(() => {
+            if (!window.speechSynthesis.speaking) { clearInterval(keepAlive); return; }
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+        }, 10000);
+    },
+
+    _ttsSetSpeaking(on, btnEl) {
+        if (!btnEl) return;
+        btnEl.classList.toggle('speaking', on);
+    },
+
+    // Đọc mặt trước hoặc mặt sau của study card
+    ttsRead(face) {
+        const text = face === 'front'
+            ? document.getElementById('study-front-text')?.textContent
+            : document.getElementById('study-back-text')?.textContent;
+        const btnId = face === 'front' ? 'tts-study-front' : 'tts-study-back';
+        app.ttsSpeak(text || '', document.getElementById(btnId));
+    },
+
+    // Đọc bất kỳ element nào theo ID
+    ttsReadEl(elId, btnId=null) {
+        const text = document.getElementById(elId)?.textContent || '';
+        const btn  = btnId ? document.getElementById(btnId)
+            : document.querySelector(`[onclick*="${elId}"]`);
+        app.ttsSpeak(text, btn);
+    },
+
+    // Auto-speak toggle (nút trên study screen + settings)
+    ttsToggleAuto() {
+        State.settings.ttsAuto = !State.settings.ttsAuto;
+        utils.saveSets();
+        app._ttsUpdateUI();
+        utils.showToast(State.settings.ttsAuto ? '🔊 Tự động đọc: BẬT' : '🔇 Tự động đọc: TẮT');
+    },
+
+    _ttsUpdateUI() {
+        const on = !!State.settings.ttsAuto;
+        // Top bar button in study screen
+        const autoBtn = document.getElementById('tts-auto-btn');
+        if (autoBtn) autoBtn.classList.toggle('on', on);
+        // Settings toggle
+        const t = document.getElementById('tts-auto-toggle-settings');
+        const th = document.getElementById('tts-auto-thumb-settings');
+        if (t) { t.style.background = on ? '#4F46E5' : ''; t.classList.toggle('bg-indigo-600', on); t.classList.toggle('bg-gray-200', !on); }
+        if (th) th.style.transform = on ? 'translateX(24px)' : 'translateX(0)';
+    },
+
+    ttsAdjustRate(delta) {
+        const current = parseFloat(State.settings.ttsRate) || 0.75;
+        const next = Math.max(0.4, Math.min(1.5, Math.round((current + delta) * 10) / 10));
+        State.settings.ttsRate = next;
+        utils.saveSets();
+        document.getElementById('tts-rate-display').textContent = next.toFixed(2);
+        const labels = {0.4:'Rất chậm',0.5:'Rất chậm',0.6:'Chậm',0.7:'Chậm',0.75:'Chậm (khuyến nghị)',0.8:'Vừa',0.9:'Vừa',1.0:'Bình thường',1.1:'Nhanh',1.2:'Nhanh',1.3:'Rất nhanh',1.4:'Rất nhanh',1.5:'Rất nhanh'};
+        const lbl = document.getElementById('tts-rate-label');
+        if (lbl) lbl.textContent = labels[next] || next+'×';
+    },
+
+    ttsSelectVoice(name) {
+        State.settings.ttsVoiceName = name;
+        utils.saveSets();
+    },
+
+    ttsTest() {
+        app.ttsSpeak("Hello! This is a test of the American English text-to-speech. The quick brown fox jumps over the lazy dog.", document.querySelector('[onclick="app.ttsTest()"]'));
+    },
+
+    // Populate voice picker (phải gọi sau khi voices load)
+    _ttsPopulateVoices() {
+        const sel = document.getElementById('tts-voice-select');
+        if (!sel) return;
+        const voices = window.speechSynthesis.getVoices()
+            .filter(v => v.lang.startsWith('en'));
+        sel.innerHTML = voices.map(v =>
+            `<option value="${v.name}" ${v.name===State.settings.ttsVoiceName?'selected':''}>${v.name} (${v.lang})</option>`
+        ).join('');
+        if (!sel.innerHTML) sel.innerHTML = '<option>Không tìm thấy giọng tiếng Anh</option>';
+    },
+
+    // Gọi khi renderSettings
+    _ttsInitSettings() {
+        app._ttsUpdateUI();
+        app._ttsPopulateVoices();
+        const rate = parseFloat(State.settings.ttsRate) || 0.75;
+        const rateEl = document.getElementById('tts-rate-display');
+        if (rateEl) rateEl.textContent = rate.toFixed(2);
+    },
+
     // ─── SETTINGS ────────────────────────────
     toggleDarkMode() {
         State.settings.darkMode=!State.settings.darkMode;
@@ -3184,7 +3447,7 @@ const GS = {
 
     // ── Apps Script source (embedded) ───────────────────────
     CODE: `/**
- * Thầy Vũ Tiến Lực 0969068849 – Google Apps Script Backend
+ * FLASHCARD MASTER – Google Apps Script Backend
  * Deploy: Extensions > Apps Script > Deploy > New deployment
  * Type: Web app | Execute as: Me | Who has access: Anyone
  */
@@ -3587,7 +3850,33 @@ ui.renderSettings = function() {
     }
 };
 
-window.onload = app.init;
+window.onload = () => {
+    app.init();
+    // Voices load async in Chrome — reload picker when ready
+    if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = () => {
+            app._ttsPopulateVoices();
+            // Auto-select best US voice if none saved
+            if (!State.settings.ttsVoiceName) {
+                const v = app._getBestUSVoice();
+                if (v) { State.settings.ttsVoiceName = v.name; utils.saveSets(); }
+            }
+        };
+        // Fire immediately (Firefox loads synchronously)
+        setTimeout(()=>app._ttsPopulateVoices(), 500);
+    }
+};
+
+// Stop TTS when leaving study screen
+const _origSwitchScreen = ui.switchScreen.bind(ui);
+ui.switchScreen = function(id, title, showBack) {
+    if (id !== 'study-flashcard' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        app._ttsSetSpeaking(false, app._ttsCurrentBtn);
+        app._ttsCurrentBtn = null;
+    }
+    _origSwitchScreen(id, title, showBack);
+};
 </script>
 </body>
 </html>
