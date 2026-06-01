@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Học cùng Thầy Lực</title>
+    <title>Học cùng thầy Lực</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -191,7 +191,7 @@
         <button id="back-btn" class="hidden text-white p-2 rounded-full hover:bg-white/20 transition">
             <i class="fas fa-arrow-left text-lg"></i>
         </button>
-        <h1 id="header-title" class="text-lg font-bold flex-1 text-center">Flashcard Master</h1>
+        <h1 id="header-title" class="text-lg font-bold flex-1 text-center">Thầy Vũ Tiến Lực 0969068849</h1>
         <div class="w-10"></div>
     </header>
 
@@ -471,83 +471,104 @@
         <!-- ═══════════════════════════════════
              SCREEN: FLASHCARD STUDY (Anki-style)
         ════════════════════════════════════ -->
-        <div id="screen-study-flashcard" class="screen-transition screen-hidden flex flex-col items-center" style="background:#0F172A; min-height:100%; padding: 16px 20px 20px;">
+        <div id="screen-study-flashcard" class="screen-transition screen-hidden flex flex-col" style="background:#0F172A; height:100%; overflow:hidden;">
 
-            <!-- Top bar: mode chips + progress -->
-            <div class="w-full flex items-center justify-between mb-3">
-                <div class="flex gap-1.5" id="study-mode-chips">
-                    <!-- populated by JS -->
+            <!-- ① TOP BAR: mode chips + progress -->
+            <div class="flex-shrink-0 px-4 pt-3 pb-2">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex gap-1.5 overflow-x-auto no-scrollbar" id="study-mode-chips"></div>
+                    <button onclick="app.shuffleCards()" class="flex-shrink-0 text-white/40 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition ml-2">
+                        <i class="fas fa-random text-xs"></i>
+                    </button>
                 </div>
-                <button onclick="app.shuffleCards()" class="text-white/50 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition" title="Trộn thẻ">
-                    <i class="fas fa-random text-sm"></i>
-                </button>
-            </div>
-
-            <!-- Progress bar + counter -->
-            <div class="w-full mb-2">
-                <div class="flex justify-between text-white/50 text-xs mb-1">
-                    <span id="study-progress">1 / 10</span>
-                    <span id="study-mode-label" class="font-semibold text-indigo-300"></span>
-                </div>
-                <div class="bg-white/10 rounded-full h-1.5 overflow-hidden">
-                    <div id="study-progress-bar" class="h-1.5 rounded-full transition-all duration-400" style="width:0%;background:linear-gradient(90deg,#6366F1,#10B981)"></div>
-                </div>
-            </div>
-
-            <!-- Progress dots (for small sets) -->
-            <div id="study-dots" class="mb-3"></div>
-
-            <!-- CARD -->
-            <div id="study-card-wrap" class="w-full max-w-sm perspective-1000 cursor-pointer relative mb-4 flex-shrink-0" style="aspect-ratio:3/4; max-height: 340px;">
-                <!-- Swipe overlay labels -->
-                <div class="swipe-label again" id="swipe-again">✗ QUÊN</div>
-                <div class="swipe-label easy"  id="swipe-easy">✓ NHỚ</div>
-
-                <div id="study-card-inner" class="w-full h-full relative transform-style-3d flashcard-inner rounded-2xl shadow-2xl" onclick="ui.flipStudyCard()">
-                    <!-- Front -->
-                    <div class="card-front absolute w-full h-full backface-hidden bg-white rounded-2xl flex flex-col items-center justify-center p-6 text-center border-4 border-indigo-100">
-                        <span class="absolute top-4 left-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Mặt Trước</span>
-                        <div id="study-front-text" class="text-2xl font-bold text-gray-800 break-words w-full math-content overflow-y-auto max-h-[80%]">Câu hỏi</div>
-                        <p class="absolute bottom-4 text-xs text-gray-400 flip-hint"><i class="fas fa-hand-pointer mr-1"></i>Chạm hoặc <span class="kbd">Space</span> để lật</p>
+                <!-- Progress bar -->
+                <div class="flex items-center gap-2">
+                    <div class="flex-1 bg-white/10 rounded-full h-1.5 overflow-hidden">
+                        <div id="study-progress-bar" class="h-1.5 rounded-full transition-all duration-400" style="width:0%;background:linear-gradient(90deg,#6366F1,#10B981)"></div>
                     </div>
-                    <!-- Back -->
-                    <div class="card-back absolute w-full h-full backface-hidden bg-indigo-50 rounded-2xl flex flex-col items-center justify-center p-6 text-center border-4 border-indigo-300 rotate-y-180">
-                        <span class="absolute top-4 left-4 text-xs font-bold text-indigo-500 uppercase tracking-wider">Mặt Sau</span>
-                        <div id="study-back-text" class="text-xl font-medium text-gray-800 break-words w-full math-content overflow-y-auto max-h-[75%]">Đáp án</div>
+                    <span id="study-progress" class="text-white/50 text-xs font-mono flex-shrink-0">1/10</span>
+                </div>
+                <!-- Dots (≤15 cards) -->
+                <div id="study-dots" class="flex gap-1 flex-wrap justify-center mt-2"></div>
+            </div>
+
+            <!-- ② CARD AREA — flex:1, card luôn hiển thị đầy đủ -->
+            <div class="flex-1 min-h-0 flex items-center justify-center px-4 py-2">
+                <div id="study-card-wrap" class="w-full perspective-1000 cursor-pointer relative" style="height:190px; max-width:380px;">
+                    <!-- Swipe labels -->
+                    <div class="swipe-label again" id="swipe-again">✗ QUÊN</div>
+                    <div class="swipe-label easy"  id="swipe-easy">✓ NHỚ</div>
+
+                    <div id="study-card-inner" class="w-full h-full relative transform-style-3d flashcard-inner rounded-2xl shadow-2xl" onclick="ui.flipStudyCard()">
+                        <!-- Front -->
+                        <div class="card-front absolute w-full h-full backface-hidden bg-white rounded-2xl flex flex-col items-center justify-center px-5 py-4 text-center border-4 border-indigo-100">
+                            <span class="absolute top-2.5 left-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mặt Trước</span>
+                            <div id="study-front-text" class="font-bold text-gray-800 break-words w-full math-content overflow-y-auto leading-snug" style="font-size:clamp(14px,4vw,22px);max-height:110px">Câu hỏi</div>
+                            <p class="absolute bottom-2 text-[10px] text-gray-300 flip-hint flex items-center gap-1">
+                                <i class="fas fa-hand-pointer"></i>Chạm hoặc <span class="kbd">Space</span>
+                            </p>
+                        </div>
+                        <!-- Back -->
+                        <div class="card-back absolute w-full h-full backface-hidden bg-indigo-50 rounded-2xl flex flex-col items-center justify-center px-5 py-4 text-center border-4 border-indigo-300 rotate-y-180">
+                            <span class="absolute top-2.5 left-3 text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Mặt Sau</span>
+                            <div id="study-back-text" class="font-medium text-gray-800 break-words w-full math-content overflow-y-auto leading-snug" style="font-size:clamp(13px,3.5vw,19px);max-height:120px">Đáp án</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ANKI rating buttons (shown after flip, Anki mode only) -->
-            <div id="anki-rating-panel" class="hidden w-full max-w-sm mb-3">
-                <p class="text-white/40 text-[10px] text-center mb-2 uppercase tracking-wider">
-                    Bạn nhớ thẻ này thế nào? &nbsp;
-                    <span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span>
-                </p>
-                <div class="flex gap-2">
-                    <button onclick="app.rateStudyCard(1)" class="rating-btn rb-again">
-                        <span>😓</span><span>Quên</span><span class="interval" id="ri-again">1 ngày</span>
-                    </button>
-                    <button onclick="app.rateStudyCard(2)" class="rating-btn rb-hard">
-                        <span>😤</span><span>Khó</span><span class="interval" id="ri-hard">3 ngày</span>
-                    </button>
-                    <button onclick="app.rateStudyCard(3)" class="rating-btn rb-good">
-                        <span>🙂</span><span>Ổn</span><span class="interval" id="ri-good">7 ngày</span>
-                    </button>
-                    <button onclick="app.rateStudyCard(4)" class="rating-btn rb-easy">
-                        <span>😎</span><span>Dễ</span><span class="interval" id="ri-easy">14 ngày</span>
+            <!-- ③ BOTTOM PANEL — luôn cố định ở đáy, không bị đẩy lên/xuống -->
+            <div class="flex-shrink-0 px-4 pb-4 pt-1" style="min-height:140px">
+
+                <!-- Mode label nhỏ -->
+                <p id="study-mode-label" class="text-center text-indigo-300/70 text-[10px] font-semibold uppercase tracking-wider mb-2"></p>
+
+                <!-- Anki: nút "Lật thẻ" (trước khi lật) -->
+                <div id="anki-show-answer" class="hidden">
+                    <button onclick="ui.flipStudyCard()" class="w-full py-3 rounded-2xl font-bold text-white text-sm active:scale-95 transition" style="background:linear-gradient(135deg,#6366F1,#8B5CF6)">
+                        <i class="fas fa-eye mr-2"></i>Xem đáp án <span class="opacity-60 font-normal ml-1 text-xs">(Space)</span>
                     </button>
                 </div>
-            </div>
 
-            <!-- BROWSE mode nav buttons -->
-            <div id="browse-nav" class="flex gap-3 w-full max-w-sm">
-                <button onclick="app.prevStudyCard()" class="flex-1 bg-white/10 text-white py-3 rounded-xl hover:bg-white/20 transition active:scale-95 text-sm">
-                    <i class="fas fa-chevron-left mr-1"></i> Trước
-                </button>
-                <button onclick="app.nextStudyCard()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-500 transition shadow-lg active:scale-95 text-sm">
-                    Tiếp <i class="fas fa-chevron-right ml-1"></i>
-                </button>
+                <!-- Anki: 4 nút đánh giá (sau khi lật) -->
+                <div id="anki-rating-panel" class="hidden">
+                    <p class="text-white/30 text-[9px] text-center mb-1.5 uppercase tracking-wider">
+                        Bạn nhớ thẻ này thế nào?
+                        <span class="ml-1"><span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span></span>
+                    </p>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        <button onclick="app.rateStudyCard(1)" class="flex flex-col items-center py-2.5 px-1 rounded-xl font-bold text-white active:scale-95 transition" style="background:linear-gradient(135deg,#EF4444,#DC2626)">
+                            <span class="text-base leading-none mb-0.5">😓</span>
+                            <span class="text-[11px]">Quên</span>
+                            <span class="text-[9px] opacity-70" id="ri-again">1 ngày</span>
+                        </button>
+                        <button onclick="app.rateStudyCard(2)" class="flex flex-col items-center py-2.5 px-1 rounded-xl font-bold text-white active:scale-95 transition" style="background:linear-gradient(135deg,#F59E0B,#D97706)">
+                            <span class="text-base leading-none mb-0.5">😤</span>
+                            <span class="text-[11px]">Khó</span>
+                            <span class="text-[9px] opacity-70" id="ri-hard">3 ngày</span>
+                        </button>
+                        <button onclick="app.rateStudyCard(3)" class="flex flex-col items-center py-2.5 px-1 rounded-xl font-bold text-white active:scale-95 transition" style="background:linear-gradient(135deg,#3B82F6,#2563EB)">
+                            <span class="text-base leading-none mb-0.5">🙂</span>
+                            <span class="text-[11px]">Ổn</span>
+                            <span class="text-[9px] opacity-70" id="ri-good">7 ngày</span>
+                        </button>
+                        <button onclick="app.rateStudyCard(4)" class="flex flex-col items-center py-2.5 px-1 rounded-xl font-bold text-white active:scale-95 transition" style="background:linear-gradient(135deg,#10B981,#059669)">
+                            <span class="text-base leading-none mb-0.5">😎</span>
+                            <span class="text-[11px]">Dễ</span>
+                            <span class="text-[9px] opacity-70" id="ri-easy">14 ngày</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Browse: Trước / Tiếp -->
+                <div id="browse-nav" class="grid grid-cols-2 gap-2">
+                    <button onclick="app.prevStudyCard()" class="bg-white/10 text-white py-3 rounded-xl hover:bg-white/20 transition active:scale-95 text-sm font-medium">
+                        <i class="fas fa-chevron-left mr-1"></i> Trước
+                    </button>
+                    <button onclick="app.nextStudyCard()" class="bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-500 transition shadow-lg active:scale-95 text-sm font-medium">
+                        Tiếp <i class="fas fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Session end panel (inline) -->
@@ -1179,7 +1200,7 @@
             <!-- App info -->
             <div class="surface rounded-2xl shadow-sm border border-theme p-4 text-center">
                 <p class="text-2xl mb-1">🎓</p>
-                <p class="font-bold text-main">Flashcard Master v3</p>
+                <p class="font-bold text-main">Thầy Vũ Tiến Lực 0969068849 v3</p>
                 <p class="text-xs text-sub mt-1">Được nâng cấp với Spaced Repetition, Gamification,<br>Thống kê chi tiết & Export/Import</p>
             </div>
         </div>
@@ -1556,7 +1577,7 @@ const utils = {
 const ui = {
     screens: ['home','review','review-done','topic-detail','study-flashcard','study-quiz','study-fill','quiz-result','tips','stats','settings'],
 
-    switchScreen(id, title='Flashcard Master', showBack=false) {
+    switchScreen(id, title='Thầy Vũ Tiến Lực 0969068849', showBack=false) {
         ui.screens.forEach(s => {
             const el = document.getElementById(`screen-${s}`);
             if (el) { el.classList.remove('screen-active'); el.classList.add('screen-hidden'); }
@@ -1574,7 +1595,7 @@ const ui = {
         State.activeTab = tab;
         document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
         document.getElementById(`nav-${tab}`).classList.add('active');
-        if (tab==='home')     { ui.renderHome(); ui.switchScreen('home','Flashcard Master'); }
+        if (tab==='home')     { ui.renderHome(); ui.switchScreen('home','Thầy Vũ Tiến Lực 0969068849'); }
         if (tab==='tips')     { ui.switchScreen('tips','💡 Tips & Hướng dẫn'); }
         if (tab==='stats')    { ui.renderStats(); ui.switchScreen('stats','Thống kê'); }
         if (tab==='settings') { ui.renderSettings(); ui.switchScreen('settings','Cài đặt'); }
@@ -1886,13 +1907,19 @@ const ui = {
 
     // ─── CARD FLIP ───────────────────────────
     flipStudyCard() {
-        const inner=document.getElementById('study-card-inner');
-        State.isFlipped=!State.isFlipped;
+        const inner = document.getElementById('study-card-inner');
+        State.isFlipped = !State.isFlipped;
         State.isFlipped ? inner.classList.add('rotate-y-180') : inner.classList.remove('rotate-y-180');
-        // Show/hide Anki rating panel
-        if (State.studyMode === 'anki' || State.studyMode === 'new') {
-            const panel = document.getElementById('anki-rating-panel');
-            State.isFlipped ? panel.classList.remove('hidden') : panel.classList.add('hidden');
+        if (State.studyMode !== 'browse') {
+            const showBtn    = document.getElementById('anki-show-answer');
+            const ratingPanel = document.getElementById('anki-rating-panel');
+            if (State.isFlipped) {
+                showBtn?.classList.add('hidden');
+                ratingPanel?.classList.remove('hidden');
+            } else {
+                showBtn?.classList.remove('hidden');
+                ratingPanel?.classList.add('hidden');
+            }
         }
     },
 
@@ -2439,8 +2466,18 @@ const app = {
         const labels={anki:'Again / Hard / Good / Easy', browse:'Duyệt tự do', new:'Thẻ chưa học'};
         document.getElementById('study-mode-label').innerText = labels[State.studyMode]||'';
         // Show/hide panels
-        document.getElementById('anki-rating-panel').classList.add('hidden');
-        document.getElementById('browse-nav').style.display = isAnki ? 'none' : 'flex';
+        const showAnswerBtn = document.getElementById('anki-show-answer');
+        const ratingPanel   = document.getElementById('anki-rating-panel');
+        const browseNav     = document.getElementById('browse-nav');
+        if (isAnki) {
+            showAnswerBtn?.classList.remove('hidden');
+            ratingPanel?.classList.add('hidden');
+            browseNav.style.display = 'none';
+        } else {
+            showAnswerBtn?.classList.add('hidden');
+            ratingPanel?.classList.add('hidden');
+            browseNav.style.display = 'grid';
+        }
         document.getElementById('study-session-end').style.display = 'none';
         document.getElementById('study-card-wrap').style.display = '';
         document.getElementById('study-dots').style.display = '';
@@ -2505,7 +2542,8 @@ const app = {
         inner.style.transition='none';
         inner.classList.remove('rotate-y-180');
         State.isFlipped=false;
-        document.getElementById('anki-rating-panel').classList.add('hidden');
+        document.getElementById('anki-rating-panel')?.classList.add('hidden');
+        document.getElementById('anki-show-answer')?.classList.toggle('hidden', State.studyMode==='browse');
         document.getElementById('swipe-again').style.opacity='0';
         document.getElementById('swipe-easy').style.opacity='0';
         setTimeout(()=>{ inner.style.transition='transform 0.6s cubic-bezier(0.4,0.2,0.2,1)'; },50);
@@ -3146,7 +3184,7 @@ const GS = {
 
     // ── Apps Script source (embedded) ───────────────────────
     CODE: `/**
- * FLASHCARD MASTER – Google Apps Script Backend
+ * Thầy Vũ Tiến Lực 0969068849 – Google Apps Script Backend
  * Deploy: Extensions > Apps Script > Deploy > New deployment
  * Type: Web app | Execute as: Me | Who has access: Anyone
  */
