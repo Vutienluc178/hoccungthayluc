@@ -3485,8 +3485,9 @@ const app = {
 const GS = {
     SK: 'fm_gs_url_v3',
     SK_SYNC: 'fm_gs_last_sync',
+    DEFAULT_URL: 'https://script.google.com/macros/s/AKfycbxyh7_6cEvtmA-Qkth_T0YJCpE3nHs9wy5Cp5gWDxlroH_1jw-zlQNGbx6jzz-HBJ_00A/exec',
 
-    getURL()   { return localStorage.getItem(GS.SK) || ''; },
+    getURL()   { return localStorage.getItem(GS.SK) || GS.DEFAULT_URL; },
     setURL(u)  { localStorage.setItem(GS.SK, u.trim()); },
     getLastSync() { return localStorage.getItem(GS.SK_SYNC) || ''; },
     setLastSync() { localStorage.setItem(GS.SK_SYNC, new Date().toLocaleString('vi-VN')); },
@@ -3910,18 +3911,18 @@ ui.renderSettings = function() {
     _origRenderSettings();
     const inp = document.getElementById('gs-url-input');
     if (inp) {
-        const saved = GS.getURL();
-        inp.value = saved;
-        if (saved) {
-            document.getElementById('gs-ping-btn').classList.remove('hidden');
-            document.getElementById('gs-actions').style.display='block';
-            document.getElementById('gs-manager-section').style.display='block';
-            GS.setStatus('idle', 'URL đã lưu – nhấn "Kiểm tra" để xác nhận kết nối');
+        const url = GS.getURL();   // trả về default nếu chưa lưu
+        inp.value = url;
+        if (url) {
+            document.getElementById('gs-ping-btn')?.classList.remove('hidden');
+            document.getElementById('gs-actions').style.display = 'block';
+            document.getElementById('gs-manager-section').style.display = 'block';
+            const isDefault = (url === GS.DEFAULT_URL && !localStorage.getItem(GS.SK));
+            GS.setStatus('idle', isDefault
+                ? '🔗 URL mặc định đã sẵn sàng – nhấn "Kiểm tra" để kết nối'
+                : 'URL đã lưu – nhấn "Kiểm tra" để xác nhận kết nối');
             const ls = GS.getLastSync();
-            if (ls) {
-                const lsEl = document.getElementById('gs-last-sync');
-                if (lsEl) lsEl.textContent = '↑ ' + ls;
-            }
+            if (ls) { const lsEl = document.getElementById('gs-last-sync'); if (lsEl) lsEl.textContent = '↑ ' + ls; }
         }
     }
 };
