@@ -179,6 +179,26 @@
         @keyframes flipHint { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .flip-hint { animation: flipHint 2s ease-in-out 2; }
 
+        /* ═══ TOPIC DETAIL ACCORDION ═══ */
+        .td-accordion-body {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
+        }
+        .td-accordion-body.open { max-height: 2000px; }
+
+        /* ═══ PROMPT TEMPLATES ═══ */
+        .prompt-card { border-left: 3px solid; }
+        .prompt-body {
+            font-family: monospace; font-size: 11px; line-height: 1.6;
+            background: var(--surface2); border-radius: 10px; padding: 10px 12px;
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
+            color: var(--text2); white-space: pre-wrap; word-break: break-word;
+        }
+        .prompt-body.open { max-height: 600px; }
+        .prompt-copy-btn { transition: all 0.2s; }
+        .prompt-copy-btn.copied { background: #10B981 !important; color: white !important; }
+
         /* ═══ LIBRARY ═══ */
         .lib-sort-chip {
             background: var(--surface2); color: var(--text2);
@@ -533,62 +553,88 @@
                 </div>
             </div>
 
-            <!-- Import CSV / XLSX -->
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-file-import text-amber-500 text-base"></i>
-                    <p class="text-xs font-bold text-amber-700">Import từ CSV hoặc Excel (.xlsx)</p>
-                </div>
-                <p class="text-xs text-amber-600 mb-2">Cột A: Mặt trước &nbsp;|&nbsp; Cột B: Mặt sau &nbsp;|&nbsp; Cột C: Ghi chú (tuỳ chọn)</p>
-                <div class="flex gap-2 flex-wrap">
-                    <label class="shrink-0 bg-amber-500 text-white text-xs px-3 py-2 rounded-lg cursor-pointer hover:bg-amber-600 transition font-semibold flex items-center gap-1.5">
-                        <i class="fas fa-upload"></i> Chọn file
-                        <input type="file" accept=".csv,.txt,.xlsx,.xls" class="hidden" onchange="app.importFile(this)">
-                    </label>
-                    <button onclick="app.downloadSampleCSV()" class="shrink-0 bg-white border border-amber-300 text-amber-700 text-xs px-3 py-2 rounded-lg hover:bg-amber-50 transition font-semibold flex items-center gap-1.5">
-                        <i class="fas fa-download"></i> Mẫu CSV
-                    </button>
-                    <button onclick="app.downloadSampleXLSX()" class="shrink-0 bg-white border border-green-300 text-green-700 text-xs px-3 py-2 rounded-lg hover:bg-green-50 transition font-semibold flex items-center gap-1.5">
-                        <i class="fas fa-file-excel"></i> Mẫu XLSX
-                    </button>
-                </div>
-            </div>
-
-            <!-- Add card form -->
-            <div class="surface rounded-xl shadow-sm border border-theme p-4 mb-3">
-                <h4 class="text-xs font-bold text-sub mb-2 uppercase tracking-wider">Thêm thẻ mới</h4>
-                <div class="space-y-2">
-                    <input type="text" id="new-card-front" placeholder="Mặt trước… VD: Tính $x^2+1$ khi $x=3$" class="w-full px-3 py-2 surface2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm text-main" oninput="app.updateMathPreview()">
-                    <textarea id="new-card-back" placeholder="Mặt sau… VD: $$\frac{-b\pm\sqrt{b^2-4ac}}{2a}$$" rows="2" class="w-full px-3 py-2 surface2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm text-main resize-none" oninput="app.updateMathPreview()"></textarea>
-                    <!-- Live math preview -->
-                    <div id="math-preview-wrap" class="hidden surface2 border border-theme rounded-lg p-3">
-                        <p class="text-[10px] text-sub font-semibold uppercase mb-1">Xem trước</p>
-                        <div id="math-preview" class="math-content text-main text-sm"></div>
-                    </div>
-                    <p class="math-hint">Công thức toán: <code>$x^2$</code> (inline) hoặc <code>$$\frac{a}{b}$$</code> (display)</p>
-                    <div class="flex gap-2">
-                        <button onclick="app.addFlashcard()" class="flex-1 py-2 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition text-sm">
-                            <i class="fas fa-check mr-1"></i> Lưu thẻ
-                        </button>
-                        <button onclick="app.addFlashcardAndSync()" id="btn-save-sync" class="hidden shrink-0 py-2 px-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition text-sm" title="Lưu thẻ & đồng bộ Sheet">
-                            <i class="fas fa-check mr-1"></i><i class="fas fa-cloud-upload-alt"></i>
-                        </button>
-                    </div>
-                    <!-- Sync status chip -->
-                    <div id="sync-status-chip" class="hidden items-center gap-2 text-xs px-3 py-1.5 rounded-lg">
-                        <span id="sync-status-icon"></span>
-                        <span id="sync-status-msg"></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="font-semibold text-main text-sm">Danh sách thẻ (<span id="flashcard-count">0</span>)</h3>
-                <button onclick="app.startTopicReview()" id="btn-topic-review" class="text-xs text-orange-500 font-semibold bg-orange-50 px-2 py-1 rounded-lg hidden">
-                    <i class="fas fa-redo mr-1"></i>Ôn thẻ đến hạn
+            <!-- ── Accordion: Import ── -->
+            <div class="surface rounded-xl shadow-sm border border-theme mb-2 overflow-hidden">
+                <button onclick="tdAccordion.toggle('import')"
+                    class="w-full flex items-center justify-between px-4 py-3 hover:surface2 transition text-left">
+                    <span class="flex items-center gap-2 text-sm font-semibold text-main">
+                        <i class="fas fa-file-import text-amber-500"></i> Import CSV / Excel
+                    </span>
+                    <i id="td-chevron-import" class="fas fa-chevron-down text-sub text-xs transition-transform duration-300"></i>
                 </button>
+                <div id="td-body-import" class="td-accordion-body border-t border-theme">
+                    <div class="p-4 pt-3">
+                        <p class="text-xs text-sub mb-3">Cột A: Mặt trước &nbsp;|&nbsp; Cột B: Mặt sau &nbsp;|&nbsp; Cột C: Ghi chú (tuỳ chọn)</p>
+                        <div class="flex gap-2 flex-wrap">
+                            <label class="shrink-0 bg-amber-500 text-white text-xs px-3 py-2 rounded-lg cursor-pointer hover:bg-amber-600 transition font-semibold flex items-center gap-1.5">
+                                <i class="fas fa-upload"></i> Chọn file
+                                <input type="file" accept=".csv,.txt,.xlsx,.xls" class="hidden" onchange="app.importFile(this)">
+                            </label>
+                            <button onclick="app.downloadSampleCSV()" class="shrink-0 bg-white border border-amber-300 text-amber-700 text-xs px-3 py-2 rounded-lg hover:bg-amber-50 transition font-semibold flex items-center gap-1.5">
+                                <i class="fas fa-download"></i> Mẫu CSV
+                            </button>
+                            <button onclick="app.downloadSampleXLSX()" class="shrink-0 bg-white border border-green-300 text-green-700 text-xs px-3 py-2 rounded-lg hover:bg-green-50 transition font-semibold flex items-center gap-1.5">
+                                <i class="fas fa-file-excel"></i> Mẫu XLSX
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="flashcards-list" class="space-y-2 pb-6"></div>
+
+            <!-- ── Accordion: Thêm thẻ ── -->
+            <div class="surface rounded-xl shadow-sm border border-theme mb-2 overflow-hidden">
+                <button onclick="tdAccordion.toggle('addcard')"
+                    class="w-full flex items-center justify-between px-4 py-3 hover:surface2 transition text-left">
+                    <span class="flex items-center gap-2 text-sm font-semibold text-main">
+                        <i class="fas fa-plus-circle text-indigo-500"></i> Thêm thẻ mới
+                    </span>
+                    <i id="td-chevron-addcard" class="fas fa-chevron-down text-sub text-xs transition-transform duration-300"></i>
+                </button>
+                <div id="td-body-addcard" class="td-accordion-body border-t border-theme">
+                    <div class="p-4 pt-3 space-y-2">
+                        <input type="text" id="new-card-front" placeholder="Mặt trước… VD: Tính $x^2+1$ khi $x=3$" class="w-full px-3 py-2 surface2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm text-main" oninput="app.updateMathPreview()">
+                        <textarea id="new-card-back" placeholder="Mặt sau… VD: $$\frac{-b\pm\sqrt{b^2-4ac}}{2a}$$" rows="2" class="w-full px-3 py-2 surface2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm text-main resize-none" oninput="app.updateMathPreview()"></textarea>
+                        <div id="math-preview-wrap" class="hidden surface2 border border-theme rounded-lg p-3">
+                            <p class="text-[10px] text-sub font-semibold uppercase mb-1">Xem trước</p>
+                            <div id="math-preview" class="math-content text-main text-sm"></div>
+                        </div>
+                        <p class="math-hint">Công thức: <code>$x^2$</code> (inline) &nbsp;|&nbsp; <code>$$\frac{a}{b}$$</code> (display)</p>
+                        <div class="flex gap-2">
+                            <button onclick="app.addFlashcard()" class="flex-1 py-2 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition text-sm">
+                                <i class="fas fa-check mr-1"></i> Lưu thẻ
+                            </button>
+                            <button onclick="app.addFlashcardAndSync()" id="btn-save-sync" class="hidden shrink-0 py-2 px-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition text-sm" title="Lưu & đồng bộ Sheet">
+                                <i class="fas fa-check mr-1"></i><i class="fas fa-cloud-upload-alt"></i>
+                            </button>
+                        </div>
+                        <div id="sync-status-chip" class="hidden items-center gap-2 text-xs px-3 py-1.5 rounded-lg">
+                            <span id="sync-status-icon"></span>
+                            <span id="sync-status-msg"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Accordion: Danh sách thẻ ── -->
+            <div class="surface rounded-xl shadow-sm border border-theme mb-2 overflow-hidden">
+                <button onclick="tdAccordion.toggle('cardlist')"
+                    class="w-full flex items-center justify-between px-4 py-3 hover:surface2 transition text-left">
+                    <span class="flex items-center gap-2 text-sm font-semibold text-main">
+                        <i class="fas fa-list text-emerald-500"></i>
+                        Danh sách thẻ &nbsp;<span class="text-sub font-normal">(<span id="flashcard-count">0</span>)</span>
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <button onclick="event.stopPropagation();app.startTopicReview()" id="btn-topic-review"
+                            class="hidden text-xs text-orange-500 font-semibold bg-orange-50 px-2 py-1 rounded-lg">
+                            <i class="fas fa-redo mr-1"></i>Ôn đến hạn
+                        </button>
+                        <i id="td-chevron-cardlist" class="fas fa-chevron-down text-sub text-xs transition-transform duration-300"></i>
+                    </div>
+                </button>
+                <div id="td-body-cardlist" class="td-accordion-body border-t border-theme">
+                    <div id="flashcards-list" class="space-y-2 p-3 pb-4"></div>
+                </div>
+            </div>
         </div>
 
         <!-- ═══════════════════════════════════
@@ -892,6 +938,7 @@
                 <a href="#tip-habit"  class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full bg-green-100 text-green-600">📅 Thói quen</a>
                 <a href="#tip-card"   class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full bg-orange-100 text-orange-600">🃏 Tạo thẻ</a>
                 <a href="#tip-app"    class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full bg-cyan-100 text-cyan-600">📱 Dùng app</a>
+                <a href="#tip-prompt" class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full bg-rose-100 text-rose-600">🤖 Prompt AI</a>
             </div>
 
             <!-- ── SRS ── -->
@@ -1102,6 +1149,27 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- ══ PROMPT TEMPLATES ══ -->
+            <div id="tip-prompt" class="mb-5">
+                <div class="flex items-center gap-2 mb-3">
+                    <div class="w-8 h-8 rounded-xl bg-rose-100 flex items-center justify-center text-lg">🤖</div>
+                    <h3 class="font-black text-main">Prompt AI tạo thẻ tự động</h3>
+                </div>
+
+                <div class="surface rounded-2xl p-4 border border-theme shadow-sm mb-3">
+                    <p class="text-sm text-sub leading-relaxed mb-3">Copy prompt bên dưới, dán vào <strong class="text-main">ChatGPT / Claude / Gemini</strong> và thay phần <code class="surface2 px-1.5 py-0.5 rounded text-xs text-rose-500 font-mono">[CHỦ ĐỀ]</code>. AI sẽ tạo ra file CSV đúng định dạng để import thẳng vào app.</p>
+                    <div class="surface2 rounded-xl p-3 text-xs space-y-1 border border-theme">
+                        <div class="flex gap-2"><span class="text-indigo-500 font-bold">A,B</span><span class="text-sub">= Cột A: Mặt trước &nbsp;|&nbsp; Cột B: Mặt sau</span></div>
+                        <div class="flex gap-2"><span class="text-purple-500 font-bold">[đáp án]</span><span class="text-sub">= Cú pháp điền khuyết (trong mặt trước)</span></div>
+                        <div class="flex gap-2"><span class="text-orange-500 font-bold">$...$</span><span class="text-sub">= Công thức toán LaTeX inline</span></div>
+                        <div class="flex gap-2"><span class="text-orange-500 font-bold">$$...$$</span><span class="text-sub">= Công thức toán LaTeX dòng riêng</span></div>
+                    </div>
+                </div>
+
+                <!-- Prompt cards -->
+                <div class="space-y-3" id="prompt-list"></div>
             </div>
 
             <!-- Quick action -->
@@ -2162,6 +2230,7 @@ const app = {
 
     openTopic(subId, topId) {
         State.currentSubjectId=subId; State.currentTopicId=topId;
+        tdAccordion.closeAll();          // đóng tất cả khi vào topic mới
         ui.renderTopicDetail();
         ui.switchScreen('topic-detail','Chi tiết Chủ đề',true);
     },
@@ -2182,6 +2251,7 @@ const app = {
         utils.saveData(); fe.value=''; be.value=''; fe.focus();
         ui.renderTopicDetail();
         app._initSyncBtn();
+        tdAccordion.openCardList();      // tự mở danh sách thẻ sau khi thêm
         const nb=utils.checkBadges();
         if (nb.length) setTimeout(()=>utils.showToast(`🏆 Huy hiệu: ${nb[0].icon} ${nb[0].name}!`,'xp'),400);
         utils.showToast('Đã lưu thẻ!','success');
@@ -2300,6 +2370,7 @@ const app = {
 
                 if (count > 0) {
                     utils.saveData(); ui.renderTopicDetail(); app._initSyncBtn();
+                    tdAccordion.openCardList();
                     utils.showToast(`✅ Đã import ${count} thẻ từ Excel!`, 'success');
                     if (skipped > 1) utils.showToast(`(Bỏ qua ${skipped} dòng trống)`);
                     if (GS.getURL()) {
@@ -2409,7 +2480,7 @@ const app = {
             });
             if (count>0) {
                 utils.saveData(); ui.renderTopicDetail();
-                app._initSyncBtn();
+                app._initSyncBtn(); tdAccordion.openCardList();
                 utils.showToast(`✅ Đã import ${count} thẻ!`,'success');
                 // Tự động sync nếu đã kết nối Sheet
                 if (GS.getURL()) {
@@ -4351,6 +4422,341 @@ app.gsToggleAutoLoad = function() {
     if (tog)   tog.style.background   = on ? '#4F46E5' : '';
     if (thumb) thumb.style.transform  = on ? 'translateX(24px)' : 'translateX(0)';
     utils.showToast(on ? '☁️ Tự động tải Sheet: BẬT' : '☁️ Tự động tải Sheet: TẮT');
+};
+
+// ═══════════════════════════════════════════════════════════
+//  TOPIC DETAIL ACCORDION (Import / Thêm thẻ / Danh sách)
+// ═══════════════════════════════════════════════════════════
+const tdAccordion = {
+    _state: { import: false, addcard: false, cardlist: false },
+
+    toggle(id) {
+        this._state[id] = !this._state[id];
+        const body    = document.getElementById(`td-body-${id}`);
+        const chevron = document.getElementById(`td-chevron-${id}`);
+        if (body)    body.classList.toggle('open', this._state[id]);
+        if (chevron) chevron.style.transform = this._state[id] ? 'rotate(180deg)' : 'rotate(0deg)';
+        // Auto-focus input khi mở form thêm thẻ
+        if (id === 'addcard' && this._state[id]) {
+            setTimeout(() => document.getElementById('new-card-front')?.focus(), 360);
+        }
+    },
+
+    // Đóng tất cả (gọi khi vào topic mới)
+    closeAll() {
+        ['import','addcard','cardlist'].forEach(id => {
+            this._state[id] = false;
+            const body    = document.getElementById(`td-body-${id}`);
+            const chevron = document.getElementById(`td-chevron-${id}`);
+            if (body)    body.classList.remove('open');
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+        });
+    },
+
+    // Mở danh sách thẻ khi flashcards-list cần hiển thị
+    openCardList() {
+        if (!this._state.cardlist) this.toggle('cardlist');
+    }
+};
+
+// ═══════════════════════════════════════════════════════════
+//  PROMPT TEMPLATES
+// ═══════════════════════════════════════════════════════════
+const PROMPTS = [
+    {
+        id: 'basic',
+        icon: '📚',
+        title: 'Thẻ hỏi-đáp cơ bản',
+        color: '#6366F1',
+        tag: 'Mọi môn học',
+        desc: 'Tạo bộ thẻ Q&A đơn giản — phù hợp với bất kỳ chủ đề nào',
+        prompt: `Tạo 20 thẻ flashcard cho chủ đề: [CHỦ ĐỀ]
+
+Yêu cầu định dạng CSV (QUAN TRỌNG, không thay đổi):
+- Dòng đầu tiên là tiêu đề: Mặt trước,Mặt sau
+- Mỗi thẻ một dòng, phân cách bởi dấu phẩy
+- Nếu nội dung có dấu phẩy thì bao trong dấu ngoặc kép
+- Mỗi thẻ chỉ chứa MỘT khái niệm duy nhất (ngắn gọn)
+- Mặt trước: câu hỏi hoặc khái niệm
+- Mặt sau: câu trả lời hoặc định nghĩa ngắn gọn
+
+Ví dụ đầu ra:
+Mặt trước,Mặt sau
+Mitosis là gì?,Quá trình phân chia tế bào tạo ra 2 tế bào con giống hệt tế bào mẹ
+Tế bào nhân thực khác tế bào nhân sơ ở điểm nào?,Tế bào nhân thực có màng nhân bao quanh nhân
+
+Chỉ xuất CSV, không giải thích thêm.`,
+        sample: `Mặt trước,Mặt sau
+Quang hợp là gì?,"Quá trình cây xanh chuyển đổi ánh sáng, CO₂ và nước thành glucose và O₂"
+Lục lạp có chức năng gì?,Là nơi diễn ra quá trình quang hợp trong tế bào thực vật
+ATP là viết tắt của?,Adenosine Triphosphate — phân tử năng lượng chính của tế bào`
+    },
+    {
+        id: 'vocab',
+        icon: '🔤',
+        title: 'Từ vựng ngoại ngữ',
+        color: '#10B981',
+        tag: 'Tiếng Anh / Nhật / Hàn…',
+        desc: 'Tạo thẻ từ vựng kèm ví dụ câu và phiên âm',
+        prompt: `Tạo 20 thẻ flashcard từ vựng [NGÔN NGỮ] về chủ đề: [CHỦ ĐỀ]
+
+Định dạng CSV (KHÔNG thay đổi):
+Mặt trước,Mặt sau
+
+Quy tắc:
+- Mặt trước: Từ [NGÔN NGỮ] + phiên âm trong ngoặc ()
+- Mặt sau: Nghĩa tiếng Việt + 1 ví dụ câu ngắn (gạch đầu dòng "VD:")
+- Chọn từ vựng thông dụng, thực tế
+- Không dùng từ quá khó hoặc quá đơn giản
+
+Ví dụ đầu ra (Tiếng Anh):
+Mặt trước,Mặt sau
+Accomplish (ə-kŏm'plĭsh),"Hoàn thành, đạt được. VD: She accomplished her goal of running a marathon."
+Perseverance (pûr'sə-vîr'əns),"Sự kiên trì. VD: Success requires perseverance and hard work."
+
+Chỉ xuất CSV, không giải thích thêm.`,
+        sample: `Mặt trước,Mặt sau
+Diligent (dĭl'ĭ-jənt),"Chăm chỉ, cần cù. VD: She is a diligent student who never misses class."
+Eloquent (ĕl'ə-kwənt),"Hùng hồn, lưu loát. VD: His eloquent speech moved the entire audience."
+Resilient (rĭ-zĭl'yənt),"Kiên cường, dẻo dai. VD: Children are often more resilient than we think."`
+    },
+    {
+        id: 'fillin',
+        icon: '✏️',
+        title: 'Điền khuyết thông minh',
+        color: '#8B5CF6',
+        tag: 'Lịch sử / Địa lý / Khoa học',
+        desc: 'Dùng cú pháp [đáp án] để tạo chỗ trống trong câu — học chủ động hơn',
+        prompt: `Tạo 20 thẻ điền khuyết cho chủ đề: [CHỦ ĐỀ]
+
+Định dạng CSV (QUAN TRỌNG):
+Mặt trước,Mặt sau
+
+Quy tắc BẮT BUỘC:
+- Mặt trước: Câu có chỗ trống, đáp án đặt trong ngoặc vuông [đáp án]
+- Mặt sau: Chỉ ghi đáp án (không có gì thêm)
+- Mỗi câu chỉ có 1-2 chỗ trống
+- Câu phải đủ ngữ cảnh để suy luận
+- KHÔNG để đáp án quá dễ đoán
+
+Ví dụ đầu ra:
+Mặt trước,Mặt sau
+"Chiến tranh thế giới thứ [nhất] bắt đầu năm [1914]","nhất, 1914"
+"Thủ đô của [Nhật Bản] là Tokyo",Nhật Bản
+"[Archimedes] phát hiện ra nguyên lý về lực đẩy trong nước",Archimedes
+
+Chỉ xuất CSV, không giải thích thêm.`,
+        sample: `Mặt trước,Mặt sau
+"Cách mạng tháng [Tám] năm 1945 giành độc lập cho [Việt Nam]","Tám, Việt Nam"
+"[Hồ Chí Minh] đọc Tuyên ngôn Độc lập ngày 2/9/1945",Hồ Chí Minh
+"Quốc hội Việt Nam họp lần đầu năm [1946]",1946`
+    },
+    {
+        id: 'math',
+        icon: '🔢',
+        title: 'Toán học & Vật lý (LaTeX)',
+        color: '#F59E0B',
+        tag: 'Toán / Lý / Hóa',
+        desc: 'Tạo thẻ công thức dùng ký hiệu $...$ và $$...$$ để render đẹp trong app',
+        prompt: `Tạo 15 thẻ flashcard công thức cho môn: [MÔN HỌC] — chủ đề: [CHỦ ĐỀ]
+
+Định dạng CSV (QUAN TRỌNG):
+Mặt trước,Mặt sau
+
+Quy tắc BẮT BUỘC về LaTeX:
+- Công thức inline (trong câu): dùng $công_thức$
+- Công thức display (dòng riêng, to): dùng $$công_thức$$
+- Mặt trước: câu hỏi hoặc tên công thức
+- Mặt sau: công thức LaTeX + giải thích biến số ngắn gọn
+
+Ví dụ đầu ra (Vật lý):
+Mặt trước,Mặt sau
+Công thức tính vận tốc?,"$$v = \\frac{s}{t}$$  v: vận tốc (m/s), s: quãng đường (m), t: thời gian (s)"
+Định luật 2 Newton?,"$$F = ma$$  F: lực (N), m: khối lượng (kg), a: gia tốc (m/s²)"
+Năng lượng Einstein?,"$$E = mc^2$$  E: năng lượng, m: khối lượng, c: vận tốc ánh sáng"
+
+Ví dụ đầu ra (Toán):
+Mặt trước,Mặt sau
+Công thức nghiệm phương trình bậc 2?,"$$x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$$"
+Đạo hàm của $\\sin(x)$?,"$\\cos(x)$"
+
+Chỉ xuất CSV, không giải thích thêm.`,
+        sample: `Mặt trước,Mặt sau
+Công thức tính diện tích hình tròn?,"$$S = \\pi r^2$$  r: bán kính"
+Đạo hàm của $e^x$?,"$e^x$ (không đổi)"
+Công thức lượng giác $\\sin^2(x) + \\cos^2(x)$?,"$= 1$ (hằng đẳng thức Pytago)"`
+    },
+    {
+        id: 'story',
+        icon: '📖',
+        title: 'Ôn tập từ đoạn văn / bài đọc',
+        color: '#EC4899',
+        tag: 'Mọi môn học',
+        desc: 'Dán đoạn văn vào, AI tự tạo thẻ hỏi đáp từ nội dung đó',
+        prompt: `Đọc đoạn văn sau và tạo thẻ flashcard từ các thông tin quan trọng:
+
+---
+[DÁN ĐOẠN VĂN / BÀI ĐỌC VÀO ĐÂY]
+---
+
+Yêu cầu:
+1. Tạo 15-20 thẻ Q&A từ thông tin trong đoạn văn
+2. Dùng cả 2 loại thẻ:
+   - Hỏi đáp thông thường (Mặt trước là câu hỏi, Mặt sau là đáp án)
+   - Điền khuyết (dùng [đáp án] trong mặt trước cho sự kiện, số liệu, tên)
+3. Ưu tiên: số liệu, ngày tháng, tên người, tên địa danh, khái niệm chính
+4. Bỏ qua thông tin ít quan trọng
+
+Định dạng CSV:
+Mặt trước,Mặt sau
+
+Chỉ xuất CSV, không giải thích thêm.`,
+        sample: `Mặt trước,Mặt sau
+"[Nguyễn Du] sinh năm 1765 tại Hà Tĩnh",Nguyễn Du
+Truyện Kiều được viết bằng thể thơ gì?,Lục bát (6-8 chữ)
+"Truyện Kiều có tổng cộng [3254] câu thơ",3254`
+    },
+    {
+        id: 'spaced',
+        icon: '🧠',
+        title: 'Thẻ theo cấp độ Bloom',
+        color: '#14B8A6',
+        tag: 'Học sâu — Hiểu bản chất',
+        desc: 'Tạo thẻ từ nhớ → hiểu → áp dụng → phân tích, tránh học vẹt',
+        prompt: `Tạo 20 thẻ flashcard nhiều cấp độ tư duy (Bloom's Taxonomy) cho: [CHỦ ĐỀ]
+
+Định dạng CSV:
+Mặt trước,Mặt sau
+
+Phân bổ 5 thẻ cho mỗi cấp độ:
+
+CẤP 1 - Ghi nhớ (Remember):
+- Hỏi định nghĩa, công thức, tên gọi
+- VD: "Quang hợp là gì?"
+
+CẤP 2 - Hiểu (Understand):
+- Hỏi giải thích bằng lời của bản thân, so sánh
+- VD: "Tại sao quang hợp quan trọng với sinh vật?"
+
+CẤP 3 - Áp dụng (Apply):
+- Đưa ra tình huống thực tế, yêu cầu áp dụng kiến thức
+- VD: "Nếu thiếu ánh sáng, cây sẽ quang hợp thế nào?"
+
+CẤP 4 - Phân tích (Analyze):
+- Hỏi nguyên nhân, mối liên hệ, hậu quả
+- VD: "Điều gì xảy ra nếu lục lạp bị phá hủy?"
+
+Thêm tag [N1], [N2], [N3], [N4] vào đầu mặt trước để phân biệt cấp độ.
+Chỉ xuất CSV, không giải thích thêm.`,
+        sample: `Mặt trước,Mặt sau
+[N1] Lực hấp dẫn là gì?,"Lực hút giữa các vật có khối lượng, tỉ lệ thuận với khối lượng và tỉ lệ nghịch với bình phương khoảng cách"
+[N2] Tại sao các hành tinh quay quanh mặt trời mà không rơi vào?,Vì lực hấp dẫn đóng vai trò lực hướng tâm cân bằng với lực ly tâm của chuyển động quỹ đạo
+[N3] Nếu khối lượng Trái Đất tăng gấp đôi thì trọng lực bề mặt thay đổi thế nào?,Tăng gấp đôi (g ∝ M)
+[N4] Vì sao ở độ cao lớn con người cảm thấy nhẹ hơn?,Vì lực hấp dẫn giảm theo bình phương khoảng cách đến tâm Trái Đất`
+    }
+];
+
+const promptUI = {
+    _open: {},
+
+    render() {
+        const container = document.getElementById('prompt-list');
+        if (!container) return;
+        container.innerHTML = '';
+        PROMPTS.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'surface rounded-2xl border border-theme shadow-sm prompt-card overflow-hidden';
+            card.style.borderLeftColor = p.color;
+            card.innerHTML = `
+                <!-- Header -->
+                <div class="flex items-center gap-3 p-3 cursor-pointer select-none hover:surface2 transition"
+                     onclick="promptUI.toggle('${p.id}')">
+                    <span class="text-2xl flex-shrink-0">${p.icon}</span>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <p class="font-bold text-main text-sm">${p.title}</p>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded-full font-semibold flex-shrink-0"
+                                  style="background:${p.color}20;color:${p.color}">${p.tag}</span>
+                        </div>
+                        <p class="text-xs text-sub">${p.desc}</p>
+                    </div>
+                    <i id="prompt-chevron-${p.id}" class="fas fa-chevron-down text-sub text-xs transition-transform duration-300 flex-shrink-0"></i>
+                </div>
+
+                <!-- Body (collapsible) -->
+                <div id="prompt-body-${p.id}" class="prompt-body border-t border-theme">${p.prompt.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+
+                <!-- Footer buttons (always visible) -->
+                <div id="prompt-footer-${p.id}" class="hidden border-t border-theme px-3 py-2.5 flex gap-2 flex-wrap">
+                    <button onclick="promptUI.copy('${p.id}')" id="prompt-copy-${p.id}"
+                        class="prompt-copy-btn flex-1 text-xs font-bold py-2 px-3 rounded-xl border border-theme surface2 text-main hover:bg-indigo-50 hover:border-indigo-300 hover:text-indigo-600 transition flex items-center justify-center gap-1.5">
+                        <i class="fas fa-copy"></i> Copy Prompt
+                    </button>
+                    <button onclick="promptUI.showSample('${p.id}')"
+                        class="text-xs font-semibold py-2 px-3 rounded-xl transition flex items-center gap-1.5"
+                        style="background:${p.color}15;color:${p.color};border:1px solid ${p.color}40">
+                        <i class="fas fa-eye"></i> Xem mẫu output
+                    </button>
+                </div>
+
+                <!-- Sample output (hidden) -->
+                <div id="prompt-sample-${p.id}" class="hidden border-t border-theme p-3">
+                    <p class="text-[10px] text-sub font-bold uppercase mb-1.5">📋 Ví dụ output AI trả về:</p>
+                    <pre class="text-[11px] text-main surface2 rounded-xl p-3 overflow-x-auto leading-relaxed border border-theme">${p.sample.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+                    <p class="text-[10px] text-sub mt-2 flex items-center gap-1">
+                        <i class="fas fa-info-circle text-indigo-400"></i>
+                        Copy output → vào Chủ đề → Import CSV → Chọn file (paste vào file .csv)
+                    </p>
+                </div>`;
+            container.appendChild(card);
+        });
+    },
+
+    toggle(id) {
+        this._open[id] = !this._open[id];
+        const body    = document.getElementById(`prompt-body-${id}`);
+        const footer  = document.getElementById(`prompt-footer-${id}`);
+        const chevron = document.getElementById(`prompt-chevron-${id}`);
+        const sample  = document.getElementById(`prompt-sample-${id}`);
+        if (body)    body.classList.toggle('open', this._open[id]);
+        if (footer)  footer.classList.toggle('hidden', !this._open[id]);
+        if (chevron) chevron.style.transform = this._open[id] ? 'rotate(180deg)' : 'rotate(0deg)';
+        if (!this._open[id] && sample) sample.classList.add('hidden');
+    },
+
+    copy(id) {
+        const p = PROMPTS.find(x => x.id === id);
+        if (!p) return;
+        const btn = document.getElementById(`prompt-copy-${id}`);
+        navigator.clipboard.writeText(p.prompt)
+            .then(() => {
+                if (btn) { btn.classList.add('copied'); btn.innerHTML = '<i class="fas fa-check"></i> Đã copy!'; }
+                utils.showToast('✅ Đã copy prompt! Dán vào ChatGPT / Claude / Gemini', 'success');
+                setTimeout(() => {
+                    if (btn) { btn.classList.remove('copied'); btn.innerHTML = '<i class="fas fa-copy"></i> Copy Prompt'; }
+                }, 2500);
+            })
+            .catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = p.prompt; document.body.appendChild(ta);
+                ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                utils.showToast('✅ Đã copy prompt!', 'success');
+            });
+    },
+
+    showSample(id) {
+        const sample = document.getElementById(`prompt-sample-${id}`);
+        if (!sample) return;
+        sample.classList.toggle('hidden');
+    }
+};
+
+// Render khi switch to tips tab
+const _origSwitchToTab = ui.switchToTab.bind(ui);
+ui.switchToTab = function(tab) {
+    _origSwitchToTab(tab);
+    if (tab === 'tips') setTimeout(() => promptUI.render(), 50);
 };
 
 window.onload = () => {
