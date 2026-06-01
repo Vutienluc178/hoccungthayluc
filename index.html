@@ -179,6 +179,27 @@
         @keyframes flipHint { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .flip-hint { animation: flipHint 2s ease-in-out 2; }
 
+        /* ═══ LIBRARY ═══ */
+        .lib-sort-chip {
+            background: var(--surface2); color: var(--text2);
+            border: 1.5px solid var(--border);
+        }
+        .lib-sort-chip.active {
+            background: #4F46E5; color: white; border-color: #4F46E5;
+        }
+        /* Accordion expand/collapse */
+        .lib-topics { overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); max-height: 0; }
+        .lib-topics.open { max-height: 2000px; }
+        /* Topic item hover */
+        .lib-topic-item { transition: background 0.15s; }
+        .lib-topic-item:hover { background: var(--surface2); }
+        /* Mastery bar shimmer */
+        @keyframes shimmer { 0%{opacity:0.7} 50%{opacity:1} 100%{opacity:0.7} }
+        .lib-due-badge { animation: shimmer 2s ease-in-out infinite; }
+        /* GS loading spin */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .lib-spin { animation: spin 0.8s linear infinite; display: inline-block; }
+
         /* ═══ TTS SPEAKER ═══ */
         .tts-btn {
             display: inline-flex; align-items: center; justify-content: center;
@@ -312,15 +333,60 @@
             <!-- Badges row -->
             <div id="badges-row" class="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1"></div>
 
-            <!-- Library -->
+            <!-- ══ LIBRARY HEADER ══ -->
             <div class="mb-3">
-                <h2 class="text-xs font-bold text-sub uppercase tracking-wider mb-2">Thư viện</h2>
-                <button onclick="ui.showCreateModal('subject')" class="w-full py-3 surface border-2 border-dashed border-indigo-300 text-indigo-500 rounded-xl font-medium hover:bg-indigo-50 transition flex items-center justify-center gap-2 text-sm shadow-sm">
+                <!-- Title row -->
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xs font-bold text-sub uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fas fa-layer-group text-indigo-400"></i> Thư viện học tập
+                    </h2>
+                    <!-- GS Load button -->
+                    <button onclick="lib.gsLoad()" id="lib-gs-btn" class="hidden text-xs font-semibold px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition active:scale-95" style="background:rgba(16,185,129,0.12);color:#10B981">
+                        <i class="fas fa-cloud-download-alt text-xs" id="lib-gs-icon"></i>
+                        <span id="lib-gs-label">Tải từ Sheet</span>
+                    </button>
+                </div>
+
+                <!-- Search bar -->
+                <div class="relative mb-2">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-sub text-xs pointer-events-none"></i>
+                    <input type="text" id="lib-search" placeholder="Tìm môn học, chủ đề…"
+                        class="w-full pl-8 pr-8 py-2.5 surface border border-theme rounded-xl text-sm text-main focus:ring-2 focus:ring-indigo-400 outline-none transition"
+                        oninput="lib.search(this.value)">
+                    <button id="lib-search-clear" onclick="lib.clearSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-sub hover:text-main">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- Sort + Filter chips -->
+                <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 mb-2">
+                    <button onclick="lib.setSort('default')" class="lib-sort-chip active shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold transition">
+                        <i class="fas fa-th-large mr-1"></i>Tất cả
+                    </button>
+                    <button onclick="lib.setSort('due')" class="lib-sort-chip shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold transition">
+                        <i class="fas fa-clock mr-1"></i>Cần ôn
+                    </button>
+                    <button onclick="lib.setSort('mastery')" class="lib-sort-chip shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold transition">
+                        <i class="fas fa-chart-line mr-1"></i>Tiến độ
+                    </button>
+                    <button onclick="lib.setSort('size')" class="lib-sort-chip shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold transition">
+                        <i class="fas fa-layer-group mr-1"></i>Nhiều thẻ
+                    </button>
+                    <button onclick="lib.setSort('az')" class="lib-sort-chip shrink-0 text-xs px-2.5 py-1 rounded-full font-semibold transition">
+                        <i class="fas fa-sort-alpha-down mr-1"></i>A–Z
+                    </button>
+                </div>
+
+                <!-- Add button -->
+                <button onclick="ui.showCreateModal('subject')" class="w-full py-2.5 surface border-2 border-dashed border-indigo-300 text-indigo-500 rounded-xl font-medium hover:bg-indigo-50 transition flex items-center justify-center gap-2 text-sm shadow-sm">
                     <i class="fas fa-plus"></i> Tạo Môn học / Chủ đề mới
                 </button>
             </div>
 
-            <div id="subjects-list" class="space-y-3 pb-4"></div>
+            <!-- Results info -->
+            <div id="lib-results-info" class="hidden text-xs text-sub mb-2 px-1"></div>
+
+            <div id="subjects-list" class="space-y-2 pb-4"></div>
         </div>
 
         <!-- ═══════════════════════════════════
@@ -1202,6 +1268,23 @@
                 </div>
             </div>
 
+            <!-- Google Sheets auto-load setting -->
+            <div class="surface rounded-2xl shadow-sm border border-theme p-4 mb-4">
+                <h3 class="font-bold text-main mb-3 text-sm flex items-center gap-2">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png" class="w-4 h-4" onerror="this.outerHTML='📊'">
+                    Google Sheets – Tự động
+                </h3>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-main">Tự động tải khi mở app</p>
+                        <p class="text-xs text-sub">Nếu đã kết nối Sheet, tải dữ liệu lúc khởi động</p>
+                    </div>
+                    <button onclick="app.gsToggleAutoLoad()" id="gs-autoload-toggle" class="w-12 h-6 rounded-full bg-gray-200 relative transition-colors duration-300 focus:outline-none">
+                        <span id="gs-autoload-thumb" class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-300"></span>
+                    </button>
+                </div>
+            </div>
+
             <!-- Data management -->
             <div class="surface rounded-2xl shadow-sm border border-theme p-4 mb-4">
                 <h3 class="font-bold text-main mb-3 text-sm flex items-center gap-2"><i class="fas fa-database text-blue-500"></i> Quản lý dữ liệu</h3>
@@ -1766,58 +1849,7 @@ const ui = {
             });
         }
 
-        // Subjects
-        const container = document.getElementById('subjects-list');
-        container.innerHTML = '';
-        if (State.data.length === 0) {
-            container.innerHTML = `<div class="text-center text-sub mt-8"><i class="fas fa-folder-open text-4xl mb-3 block"></i><p>Chưa có dữ liệu. Hãy tạo môn học đầu tiên!</p></div>`;
-            return;
-        }
-        State.data.forEach(subject => {
-            const div = document.createElement('div');
-            div.className = 'surface rounded-xl shadow-sm border border-theme overflow-hidden';
-            let topicsHtml = '';
-            if (subject.topics.length === 0) {
-                topicsHtml = '<div class="p-3 text-sm text-sub italic pl-6">Chưa có chủ đề nào.</div>';
-            } else {
-                subject.topics.forEach(topic => {
-                    const total = topic.cards.length;
-                    const mastered = topic.cards.filter(c=>SRS.isMastered(c)).length;
-                    const due = topic.cards.filter(c=>SRS.isDue(c)&&!SRS.isMastered(c)).length;
-                    const pct = total>0 ? Math.round((mastered/total)*100) : 0;
-                    topicsHtml += `
-                        <div onclick="app.openTopic('${subject.id}','${topic.id}')" class="p-3 pl-6 border-t border-theme hover:surface2 cursor-pointer transition active:surface2">
-                            <div class="flex justify-between items-center mb-1">
-                                <div class="flex items-center gap-2">
-                                    <i class="fas fa-file-alt text-sub text-sm"></i>
-                                    <span class="font-medium text-main text-sm">${topic.name}</span>
-                                    ${due>0 ? `<span class="text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full font-bold">${due} ôn</span>` : ''}
-                                </div>
-                                <span class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-semibold">${total} thẻ</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                    <div class="bg-emerald-500 h-1.5 rounded-full" style="width:${pct}%"></div>
-                                </div>
-                                <span class="text-xs text-sub">${pct}%</span>
-                            </div>
-                        </div>`;
-                });
-            }
-            div.innerHTML = `
-                <div class="p-3 surface2 border-b border-theme flex justify-between items-center">
-                    <h3 class="font-bold text-main flex items-center gap-2 text-sm">
-                        <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs"><i class="fas fa-book-open"></i></div>
-                        ${subject.name}
-                    </h3>
-                    <div class="flex gap-2 items-center">
-                        <button onclick="event.stopPropagation();app.deleteSubject('${subject.id}')" class="text-sub hover:text-red-500 p-1 transition"><i class="fas fa-trash-alt text-xs"></i></button>
-                        <button onclick="event.stopPropagation();ui.showCreateModal('topic','${subject.id}')" class="text-indigo-500 text-xs hover:underline font-semibold"><i class="fas fa-plus"></i> Chủ đề</button>
-                    </div>
-                </div>
-                <div>${topicsHtml}</div>`;
-            container.appendChild(div);
-        });
+        // Subjects list is now rendered by lib.render() — called via ui.renderHome override
     },
 
     // ─── TOPIC DETAIL ────────────────────────
@@ -1954,6 +1986,12 @@ const ui = {
     // ─── SETTINGS ────────────────────────────
     renderSettings() {
         app._ttsInitSettings();
+        // Sync auto-load toggle
+        const onAL  = !!State.settings.gsAutoLoad;
+        const togAL = document.getElementById('gs-autoload-toggle');
+        const thAL  = document.getElementById('gs-autoload-thumb');
+        if (togAL) togAL.style.background  = onAL ? '#4F46E5' : '';
+        if (thAL)  thAL.style.transform    = onAL ? 'translateX(24px)' : 'translateX(0)';
         const s = State.settings;
         document.getElementById('max-review-display').innerText = s.maxReview;
         const toggle = document.getElementById('dark-mode-toggle');
@@ -4035,8 +4073,291 @@ ui.renderSettings = function() {
     if (thumb)  thumb.style.transform   = on ? 'translateX(24px)' : 'translateX(0)';
 };
 
+// ═══════════════════════════════════════════════════════════
+//  LIBRARY CONTROLLER  (search, sort, accordion, GS load)
+// ═══════════════════════════════════════════════════════════
+const lib = {
+    _sort:   'default',   // 'default' | 'due' | 'mastery' | 'size' | 'az'
+    _query:  '',
+    _collapsed: {},       // { subjectId: true/false } — false = expanded
+
+    // ── Khởi tạo từ settings ──────────────────────────────
+    init() {
+        // Hiện nút tải GS nếu đã có URL
+        if (GS.getURL()) lib._showGSBtn(true);
+        // Restore sort
+        lib._sort = State.settings.libSort || 'default';
+        lib._updateSortChips();
+    },
+
+    _showGSBtn(show) {
+        const btn = document.getElementById('lib-gs-btn');
+        if (btn) btn.classList.toggle('hidden', !show);
+    },
+
+    // ── Search ────────────────────────────────────────────
+    search(q) {
+        lib._query = q.trim().toLowerCase();
+        const clearBtn = document.getElementById('lib-search-clear');
+        if (clearBtn) clearBtn.classList.toggle('hidden', !lib._query);
+        lib.render();
+    },
+
+    clearSearch() {
+        const inp = document.getElementById('lib-search');
+        if (inp) { inp.value=''; inp.focus(); }
+        lib.search('');
+    },
+
+    // ── Sort ──────────────────────────────────────────────
+    setSort(type) {
+        lib._sort = type;
+        State.settings.libSort = type;
+        utils.saveSets();
+        lib._updateSortChips();
+        lib.render();
+    },
+
+    _updateSortChips() {
+        document.querySelectorAll('.lib-sort-chip').forEach(el => {
+            const type = el.getAttribute('onclick')?.match(/setSort\('(\w+)'\)/)?.[1];
+            el.classList.toggle('active', type === lib._sort);
+        });
+    },
+
+    // ── Accordion toggle ──────────────────────────────────
+    toggleSubject(subId) {
+        lib._collapsed[subId] = !lib._collapsed[subId];
+        const panel = document.getElementById(`lib-topics-${subId}`);
+        const icon  = document.getElementById(`lib-chevron-${subId}`);
+        if (panel) panel.classList.toggle('open', !lib._collapsed[subId]);
+        if (icon)  icon.style.transform = lib._collapsed[subId] ? 'rotate(0deg)' : 'rotate(180deg)';
+    },
+
+    // ── Tính toán stats nhanh ──────────────────────────────
+    _subjectStats(subject) {
+        let total = 0, mastered = 0, due = 0, newCards = 0;
+        subject.topics.forEach(t => {
+            t.cards.forEach(c => {
+                total++;
+                if (SRS.isMastered(c))      mastered++;
+                else if (SRS.isDue(c))       due++;
+                if (!c.nextReview)           newCards++;
+            });
+        });
+        const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
+        return { total, mastered, due, newCards, pct };
+    },
+
+    // ── Main render ───────────────────────────────────────
+    render() {
+        const container = document.getElementById('subjects-list');
+        const infoEl    = document.getElementById('lib-results-info');
+        if (!container) return;
+
+        let subjects = [...State.data];
+
+        // 1) Filter by search query
+        if (lib._query) {
+            subjects = subjects.map(s => {
+                const matchSub = s.name.toLowerCase().includes(lib._query);
+                const filteredTopics = s.topics.filter(t =>
+                    t.name.toLowerCase().includes(lib._query) || matchSub
+                );
+                if (!matchSub && filteredTopics.length === 0) return null;
+                return { ...s, topics: matchSub ? s.topics : filteredTopics };
+            }).filter(Boolean);
+        }
+
+        // 2) Sort
+        subjects = subjects.sort((a, b) => {
+            const sa = lib._subjectStats(a), sb = lib._subjectStats(b);
+            switch (lib._sort) {
+                case 'due':     return sb.due - sa.due;
+                case 'mastery': return sb.pct - sa.pct;
+                case 'size':    return sb.total - sa.total;
+                case 'az':      return a.name.localeCompare(b.name, 'vi');
+                default:        return 0;
+            }
+        });
+
+        // 3) Info bar
+        if (lib._query && infoEl) {
+            const topicCount = subjects.reduce((n, s) => n + s.topics.length, 0);
+            infoEl.innerHTML = `<i class="fas fa-search mr-1"></i>Tìm thấy <strong class="text-main">${subjects.length} môn</strong>, <strong class="text-main">${topicCount} chủ đề</strong> cho "<em>${lib._query}</em>"`;
+            infoEl.classList.remove('hidden');
+        } else if (infoEl) {
+            infoEl.classList.add('hidden');
+        }
+
+        // 4) Render
+        container.innerHTML = '';
+
+        if (subjects.length === 0) {
+            container.innerHTML = lib._query
+                ? `<div class="text-center text-sub py-8"><i class="fas fa-search text-3xl mb-2 block opacity-40"></i><p>Không tìm thấy "<strong>${lib._query}</strong>"</p></div>`
+                : `<div class="text-center text-sub mt-6"><i class="fas fa-folder-open text-4xl mb-3 block opacity-40"></i><p>Chưa có dữ liệu. Hãy tạo môn học đầu tiên!</p></div>`;
+            return;
+        }
+
+        subjects.forEach(subject => {
+            const stats = lib._subjectStats(subject);
+            const isCollapsed = lib._collapsed[subject.id] !== false; // default collapsed=false (expanded)
+            const isExpanded  = !isCollapsed;
+
+            const div = document.createElement('div');
+            div.className = 'surface rounded-2xl border border-theme overflow-hidden shadow-sm';
+
+            // ── Subject header ────────────────────────────
+            const pctColor = stats.pct >= 80 ? '#10B981' : stats.pct >= 40 ? '#3B82F6' : '#F59E0B';
+            div.innerHTML = `
+                <!-- Header -->
+                <div onclick="lib.toggleSubject('${subject.id}')"
+                    class="p-3 cursor-pointer select-none flex items-center gap-3 hover:surface2 transition active:surface2">
+                    <!-- Progress ring mini -->
+                    <div class="relative w-10 h-10 flex-shrink-0">
+                        <svg class="w-10 h-10 -rotate-90" viewBox="0 0 36 36">
+                            <circle cx="18" cy="18" r="14" fill="none" stroke="var(--border)" stroke-width="3"/>
+                            <circle cx="18" cy="18" r="14" fill="none" stroke="${pctColor}" stroke-width="3"
+                                stroke-dasharray="${2*Math.PI*14}" stroke-dashoffset="${2*Math.PI*14*(1-stats.pct/100)}"
+                                stroke-linecap="round"/>
+                        </svg>
+                        <span class="absolute inset-0 flex items-center justify-center text-[9px] font-bold" style="color:${pctColor}">${stats.pct}%</span>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5 mb-0.5">
+                            <p class="font-bold text-main text-sm truncate">${lib._highlight(subject.name, lib._query)}</p>
+                        </div>
+                        <div class="flex items-center gap-2 text-[10px] flex-wrap">
+                            <span class="text-sub">${subject.topics.length} chủ đề · ${stats.total} thẻ</span>
+                            ${stats.due > 0 ? `<span class="lib-due-badge font-bold px-1.5 py-0.5 rounded-full" style="background:rgba(245,158,11,0.15);color:#D97706">⏰ ${stats.due} cần ôn</span>` : ''}
+                            ${stats.newCards > 0 ? `<span class="font-bold px-1.5 py-0.5 rounded-full" style="background:rgba(99,102,241,0.1);color:#6366F1">✨ ${stats.newCards} mới</span>` : ''}
+                            ${stats.pct === 100 ? `<span class="font-bold px-1.5 py-0.5 rounded-full" style="background:rgba(16,185,129,0.1);color:#10B981">✓ Hoàn thành</span>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-1 flex-shrink-0" onclick="event.stopPropagation()">
+                        <button onclick="ui.showCreateModal('topic','${subject.id}')" class="text-indigo-500 p-1.5 rounded-lg hover:bg-indigo-50 transition text-xs" title="Thêm chủ đề">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button onclick="app.deleteSubject('${subject.id}')" class="text-sub p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 transition text-xs">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <i id="lib-chevron-${subject.id}" class="fas fa-chevron-down text-sub text-xs p-1 transition-transform duration-300" style="transform:${isExpanded?'rotate(180deg)':'rotate(0deg)'}"></i>
+                    </div>
+                </div>
+
+                <!-- Topics accordion -->
+                <div id="lib-topics-${subject.id}" class="lib-topics border-t border-theme ${isExpanded ? 'open' : ''}">
+                    ${subject.topics.length === 0
+                        ? `<p class="text-xs text-sub italic px-4 py-3">Chưa có chủ đề nào.</p>`
+                        : subject.topics.map(topic => lib._renderTopic(subject, topic)).join('')
+                    }
+                </div>`;
+
+            container.appendChild(div);
+        });
+    },
+
+    // ── Render 1 topic row ────────────────────────────────
+    _renderTopic(subject, topic) {
+        const total    = topic.cards.length;
+        const mastered = topic.cards.filter(c => SRS.isMastered(c)).length;
+        const due      = topic.cards.filter(c => SRS.isDue(c) && !SRS.isMastered(c)).length;
+        const pct      = total > 0 ? Math.round((mastered / total) * 100) : 0;
+        const barColor = pct >= 80 ? '#10B981' : pct >= 40 ? '#3B82F6' : '#6366F1';
+
+        return `
+            <div class="lib-topic-item px-3 py-2.5 border-t border-theme flex items-center gap-3 cursor-pointer"
+                onclick="app.openTopic('${subject.id}','${topic.id}')">
+                <div class="w-1.5 h-10 rounded-full flex-shrink-0" style="background:${barColor}; opacity:${pct>0?1:0.3}"></div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5 mb-1">
+                        <p class="text-sm font-semibold text-main truncate">${lib._highlight(topic.name, lib._query)}</p>
+                        ${due > 0 ? `<span class="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full lib-due-badge" style="background:rgba(245,158,11,0.15);color:#D97706">⏰${due}</span>` : ''}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="flex-1 rounded-full h-1.5 overflow-hidden" style="background:var(--border)">
+                            <div class="h-1.5 rounded-full transition-all" style="width:${pct}%;background:${barColor}"></div>
+                        </div>
+                        <span class="text-[10px] text-sub flex-shrink-0">${mastered}/${total}</span>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-sub text-xs flex-shrink-0"></i>
+            </div>`;
+    },
+
+    // ── Highlight search term ─────────────────────────────
+    _highlight(text, q) {
+        if (!q) return text;
+        const idx = text.toLowerCase().indexOf(q);
+        if (idx < 0) return text;
+        return text.slice(0, idx)
+            + `<mark style="background:rgba(245,158,11,0.3);border-radius:2px;padding:0 1px">${text.slice(idx, idx + q.length)}</mark>`
+            + text.slice(idx + q.length);
+    },
+
+    // ── Tải từ Google Sheets ──────────────────────────────
+    async gsLoad() {
+        const url = GS.getURL();
+        if (!url) { utils.showToast('Chưa cài URL Google Sheets (Cài đặt)', 'error'); return; }
+
+        const icon  = document.getElementById('lib-gs-icon');
+        const label = document.getElementById('lib-gs-label');
+        if (icon)  icon.className = 'fas fa-circle-notch lib-spin text-xs';
+        if (label) label.textContent = 'Đang tải…';
+
+        try {
+            const res = await GS.get(url, { action: 'load' });
+            if (res.data && res.data.length > 0) {
+                State.data = res.data;
+                if (res.game && Object.keys(res.game).length > 0) Object.assign(State.game, res.game);
+                utils.saveData(); utils.saveGame();
+                ui.renderHome();
+                const total = res.data.reduce((a, s) => a + s.topics.reduce((b, t) => b + t.cards.length, 0), 0);
+                utils.showToast(`📥 Đã tải ${total} thẻ từ Google Sheets!`, 'success');
+                if (typeof SFX !== 'undefined') SFX.syncOk?.();
+            } else {
+                utils.showToast('Sheet trống hoặc chưa có dữ liệu.', 'error');
+            }
+        } catch (e) {
+            utils.showToast('Lỗi kết nối Sheet!', 'error');
+        } finally {
+            if (icon)  icon.className = 'fas fa-cloud-download-alt text-xs';
+            if (label) label.textContent = 'Tải từ Sheet';
+        }
+    }
+};
+
+// ── Gắn lib.render vào renderHome ────────────────────────
+const _origRenderHome = ui.renderHome.bind(ui);
+ui.renderHome = function() {
+    _origRenderHome();
+    lib.init();
+    lib.render();
+};
+
+// ── gsToggleAutoLoad ─────────────────────────────────────
+app.gsToggleAutoLoad = function() {
+    State.settings.gsAutoLoad = !State.settings.gsAutoLoad;
+    utils.saveSets();
+    const on    = !!State.settings.gsAutoLoad;
+    const tog   = document.getElementById('gs-autoload-toggle');
+    const thumb = document.getElementById('gs-autoload-thumb');
+    if (tog)   tog.style.background   = on ? '#4F46E5' : '';
+    if (thumb) thumb.style.transform  = on ? 'translateX(24px)' : 'translateX(0)';
+    utils.showToast(on ? '☁️ Tự động tải Sheet: BẬT' : '☁️ Tự động tải Sheet: TẮT');
+};
+
 window.onload = () => {
     app.init();
+    // Auto-load từ Google Sheets khi mở app
+    if (State.settings.gsAutoLoad && GS.getURL()) {
+        setTimeout(() => lib.gsLoad(), 800);
+    }
     // Voices load async in Chrome — reload picker when ready
     if (window.speechSynthesis) {
         window.speechSynthesis.onvoiceschanged = () => {
