@@ -262,6 +262,24 @@
         }
         .sfx-correct { animation: correctFlash 0.5s ease-out; }
         .sfx-wrong   { animation: wrongShake 0.4s ease-in-out; }
+
+        /* ═══ AI PROMPT BUILDER ═══ */
+        .ai-count-btn, .ai-type-btn, .ai-level-btn, .ai-lang-btn {
+            border-color: var(--border); color: var(--text2); background: var(--surface2);
+            cursor: pointer; transition: all 0.18s;
+        }
+        .ai-count-btn.active, .ai-level-btn.active, .ai-lang-btn.active {
+            border-color: #7C3AED; color: #7C3AED; background: #F5F3FF;
+            box-shadow: 0 0 0 2px rgba(124,58,237,0.15);
+        }
+        .ai-type-btn.active {
+            border-color: #7C3AED; color: #5B21B6; background: #F5F3FF;
+            box-shadow: 0 0 0 2px rgba(124,58,237,0.15);
+        }
+        body.dark .ai-count-btn.active, body.dark .ai-level-btn.active,
+        body.dark .ai-lang-btn.active, body.dark .ai-type-btn.active {
+            background: rgba(124,58,237,0.2); color: #C4B5FD;
+        }
     </style>
 </head>
 <body class="h-screen w-full flex justify-center" style="background-color:var(--bg)">
@@ -1610,20 +1628,25 @@
 
     <!-- Bottom Nav -->
     <nav id="bottom-nav" class="border-t flex">
-        <button onclick="ui.switchToTab('home')" class="nav-btn active flex-1 py-2 flex flex-col items-center gap-0.5" id="nav-home">
-            <i class="fas fa-home text-lg"></i>
+        <button onclick="ui.switchToTab('home')" class="nav-btn active flex-1 py-1.5 flex flex-col items-center gap-0.5" id="nav-home">
+            <i class="fas fa-home text-base"></i>
             <span class="text-[9px] font-semibold">Trang chủ</span>
         </button>
-        <button onclick="ui.switchToTab('stats')" class="nav-btn flex-1 py-2 flex flex-col items-center gap-0.5" id="nav-stats">
-            <i class="fas fa-chart-bar text-lg"></i>
+        <button onclick="ui.switchToTab('ai-prompt')" class="nav-btn flex-1 py-1.5 flex flex-col items-center gap-0.5 relative" id="nav-ai-prompt">
+            <span class="absolute -top-0.5 right-2 text-[8px] font-black px-1 rounded" style="background:#7C3AED;color:white;line-height:14px">AI</span>
+            <i class="fas fa-robot text-base"></i>
+            <span class="text-[9px] font-semibold">Sinh thẻ</span>
+        </button>
+        <button onclick="ui.switchToTab('stats')" class="nav-btn flex-1 py-1.5 flex flex-col items-center gap-0.5" id="nav-stats">
+            <i class="fas fa-chart-bar text-base"></i>
             <span class="text-[9px] font-semibold">Thống kê</span>
         </button>
-        <button onclick="ui.switchToTab('tips')" class="nav-btn flex-1 py-2 flex flex-col items-center gap-0.5" id="nav-tips">
-            <i class="fas fa-lightbulb text-lg"></i>
+        <button onclick="ui.switchToTab('tips')" class="nav-btn flex-1 py-1.5 flex flex-col items-center gap-0.5" id="nav-tips">
+            <i class="fas fa-lightbulb text-base"></i>
             <span class="text-[9px] font-semibold">Tips</span>
         </button>
-        <button onclick="ui.switchToTab('settings')" class="nav-btn flex-1 py-2 flex flex-col items-center gap-0.5" id="nav-settings">
-            <i class="fas fa-cog text-lg"></i>
+        <button onclick="ui.switchToTab('settings')" class="nav-btn flex-1 py-1.5 flex flex-col items-center gap-0.5" id="nav-settings">
+            <i class="fas fa-cog text-base"></i>
             <span class="text-[9px] font-semibold">Cài đặt</span>
         </button>
     </nav>
@@ -1979,7 +2002,7 @@ const utils = {
 //  UI
 // ═══════════════════════════════════════════════════════════
 const ui = {
-    screens: ['home','review','review-done','topic-detail','study-flashcard','study-quiz','study-fill','quiz-result','tips','stats','settings'],
+    screens: ['home','review','review-done','topic-detail','study-flashcard','study-quiz','study-fill','quiz-result','tips','stats','settings','ai-prompt'],
 
     switchScreen(id, title='Flashcard Master', showBack=false) {
         ui.screens.forEach(s => {
@@ -1999,10 +2022,11 @@ const ui = {
         State.activeTab = tab;
         document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
         document.getElementById(`nav-${tab}`).classList.add('active');
-        if (tab==='home')     { ui.renderHome(); ui.switchScreen('home','Flashcard Master'); }
-        if (tab==='tips')     { ui.switchScreen('tips','💡 Tips & Hướng dẫn'); }
-        if (tab==='stats')    { ui.renderStats(); ui.switchScreen('stats','Thống kê'); }
-        if (tab==='settings') { ui.renderSettings(); ui.switchScreen('settings','Cài đặt'); }
+        if (tab==='home')      { ui.renderHome(); ui.switchScreen('home','Flashcard Master'); }
+        if (tab==='tips')      { ui.switchScreen('tips','💡 Tips & Hướng dẫn'); }
+        if (tab==='stats')     { ui.renderStats(); ui.switchScreen('stats','Thống kê'); }
+        if (tab==='settings')  { ui.renderSettings(); ui.switchScreen('settings','Cài đặt'); }
+        if (tab==='ai-prompt') { ui.switchScreen('ai-prompt','🤖 Sinh thẻ bằng AI'); }
     },
 
     // ─── HOME ───────────────────────────────
@@ -4555,6 +4579,123 @@ app.gsToggleAutoLoad = function() {
     if (tog)   tog.style.background   = on ? '#4F46E5' : '';
     if (thumb) thumb.style.transform  = on ? 'translateX(24px)' : 'translateX(0)';
     utils.showToast(on ? '☁️ Tự động tải Sheet: BẬT' : '☁️ Tự động tải Sheet: TẮT');
+};
+
+// ═══════════════════════════════════════════
+//  AI PROMPT BUILDER
+// ═══════════════════════════════════════════
+const aiPrompt = {
+    state: { count: 10, type: 'vocab', level: 'basic', lang: 'vi' },
+
+    _setActive(cls, val) {
+        document.querySelectorAll(`.${cls}`).forEach(b => {
+            const isActive = (b.dataset.val === String(val));
+            b.classList.toggle('active', isActive);
+        });
+    },
+
+    setCount(n) {
+        this.state.count = n;
+        document.getElementById('ai-count-custom').value = '';
+        this._setActive('ai-count-btn', n);
+    },
+
+    setCountCustom(v) {
+        const n = parseInt(v);
+        if (n > 0) {
+            this.state.count = n;
+            this._setActive('ai-count-btn', -1); // deselect presets
+        }
+    },
+
+    setType(t)  { this.state.type  = t; this._setActive('ai-type-btn', t); },
+    setLevel(l) { this.state.level = l; this._setActive('ai-level-btn', l); },
+    setLang(lg) { this.state.lang  = lg; this._setActive('ai-lang-btn', lg); },
+
+    generate() {
+        const topic = (document.getElementById('ai-topic').value || '').trim();
+        const extra = (document.getElementById('ai-extra').value || '').trim();
+        if (!topic) { utils.showToast('⚠️ Vui lòng nhập chủ đề!'); return; }
+
+        const { count, type, level, lang } = this.state;
+
+        const levelMap   = { basic: 'cơ bản (dành cho người mới bắt đầu)', medium: 'trung bình', advanced: 'nâng cao' };
+        const langMapFront = { vi: 'Tiếng Việt', en: 'English', both: 'song ngữ Anh–Việt' };
+        const langMapBack  = { vi: 'Tiếng Việt', en: 'English', both: 'song ngữ (Tiếng Anh trước, dịch Tiếng Việt sau dấu " – ")' };
+
+        const typeInstructions = {
+            vocab: `Loại thẻ: TỪ VỰNG / THUẬT NGỮ
+- Cột A (Mặt trước): từ/thuật ngữ bằng ${langMapFront[lang]}
+- Cột B (Mặt sau): định nghĩa / nghĩa tiếng Việt ngắn gọn, rõ ràng
+- Cột C (Ghi chú): 1 câu ví dụ ngắn hoặc mẹo nhớ`,
+
+            qa: `Loại thẻ: HỎI – ĐÁP
+- Cột A (Mặt trước): câu hỏi rõ ràng, ngắn gọn (${langMapFront[lang]})
+- Cột B (Mặt sau): câu trả lời súc tích (${langMapBack[lang]})
+- Cột C (Ghi chú): giải thích thêm hoặc ví dụ minh họa`,
+
+            fill: `Loại thẻ: ĐIỀN KHUYẾT
+- Cột A (Mặt trước): câu hoàn chỉnh có đáp án bị thay bằng [đáp án], ví dụ: "Thủ đô của Pháp là [Paris]"
+- Cột B (Mặt sau): chỉ ghi đúng phần đáp án điền vào chỗ trống (không cần viết lại cả câu)
+- Cột C (Ghi chú): giải thích tại sao hoặc ngữ cảnh bổ sung`,
+
+            formula: `Loại thẻ: CÔNG THỨC / ĐỊNH LÝ / QUY TẮC
+- Cột A (Mặt trước): tên công thức / định lý / quy tắc
+- Cột B (Mặt sau): công thức hoặc phát biểu chính xác (dùng cú pháp LaTeX: $...$ cho inline, $$...$$ cho display)
+- Cột C (Ghi chú): điều kiện áp dụng hoặc ví dụ tính toán minh họa`
+        };
+
+        const prompt = `Tạo ${count} thẻ flashcard về chủ đề: "${topic}"
+Mức độ: ${levelMap[level]}
+Ngôn ngữ: ${langMapFront[lang]}
+${extra ? `Yêu cầu đặc biệt: ${extra}` : ''}
+
+${typeInstructions[type]}
+
+━━━ QUY TẮC ĐỊNH DẠNG ĐẦU RA (bắt buộc tuân theo) ━━━
+• Xuất ra đúng ${count} dòng, mỗi dòng là 1 thẻ
+• Mỗi dòng gồm 3 cột, phân cách bằng dấu TAB (\\t):
+  [Cột A]\\t[Cột B]\\t[Cột C]
+• KHÔNG thêm dòng tiêu đề (header)
+• KHÔNG đánh số thứ tự
+• KHÔNG thêm ký tự đặc biệt ở đầu dòng
+• Nếu nội dung cột có dấu phẩy, đặt trong dấu ngoặc kép ""
+• Cột C có thể để trống nếu không cần ghi chú
+• Mỗi thẻ phải độc lập, không trùng lặp nhau
+• Sắp xếp từ dễ → khó trong chủ đề
+
+Ví dụ định dạng đúng (3 thẻ mẫu):
+Mặt trước thẻ 1\\tMặt sau thẻ 1\\tGhi chú thẻ 1
+Mặt trước thẻ 2\\tMặt sau thẻ 2\\t
+Mặt trước thẻ 3\\tMặt sau thẻ 3\\tGhi chú thẻ 3
+
+Bắt đầu xuất ${count} thẻ ngay bây giờ:`;
+
+        document.getElementById('ai-prompt-text').textContent = prompt;
+        document.getElementById('ai-output-box').classList.remove('hidden');
+        document.getElementById('ai-output-box').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+
+    copy() {
+        const text = document.getElementById('ai-prompt-text').textContent;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('ai-copy-btn');
+                btn.innerHTML = '<i class="fas fa-check"></i> Đã sao chép!';
+                btn.style.background = '#059669';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> Sao chép';
+                    btn.style.background = '';
+                }, 2000);
+                utils.showToast('✅ Đã sao chép prompt!');
+            });
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = text; document.body.appendChild(ta);
+            ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+            utils.showToast('✅ Đã sao chép prompt!');
+        }
+    }
 };
 
 window.onload = () => {
