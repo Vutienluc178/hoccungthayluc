@@ -49,7 +49,19 @@
         .border-theme { border-color: var(--border); }
         #app-container { background-color: var(--surface); }
         #main-header { background-color: var(--header-bg); }
-        #bottom-nav { background-color: var(--nav-bg); border-color: var(--nav-border); box-shadow: 0 -4px 20px rgba(0,0,0,0.08); }
+        #bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 448px; /* max-w-md */
+            background-color: var(--nav-bg);
+            border-color: var(--nav-border);
+            box-shadow: 0 -2px 16px rgba(0,0,0,0.10);
+            z-index: 50;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
 
         .no-scrollbar::-webkit-scrollbar { display:none; }
         .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
@@ -100,9 +112,97 @@
         .review-item { animation: slideIn 0.3s ease; }
         @keyframes slideIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
 
+        /* ── Flashcards ── */
         body.dark .card-front { background:#1E293B !important; border-color:#4338CA !important; }
-        body.dark .card-back  { background:#1E3A4A !important; border-color:#0E7490 !important; }
-        body.dark .card-front p, body.dark .card-back p { color:#F1F5F9 !important; }
+        body.dark .card-back  { background:#0F3249 !important; border-color:#0E7490 !important; }
+        body.dark .card-front p, body.dark .card-back p,
+        body.dark .card-front div, body.dark .card-back div { color:#F1F5F9 !important; }
+        body.dark #study-front-text, body.dark #study-back-text,
+        body.dark #review-front-text, body.dark #review-back-text { color:#F1F5F9 !important; }
+        /* Labels on cards */
+        body.dark .card-front span[class*="text-gray"],
+        body.dark .card-back  span[class*="text-gray"],
+        body.dark .card-front span[class*="text-cyan"],
+        body.dark .card-back  span[class*="text-cyan"] { color:#94A3B8 !important; }
+        body.dark .card-front p[class*="text-gray"] { color:#64748B !important; }
+
+        /* ── Topic detail stat boxes ── */
+        body.dark .bg-indigo-50  { background: rgba(79,70,229,0.15) !important; }
+        body.dark .bg-green-50   { background: rgba(16,185,129,0.12) !important; }
+        body.dark .bg-orange-50  { background: rgba(249,115,22,0.12) !important; }
+        body.dark .bg-gray-50    { background: rgba(100,116,139,0.15) !important; }
+        body.dark .bg-red-50     { background: rgba(239,68,68,0.12)   !important; }
+        body.dark .bg-cyan-50    { background: rgba(6,182,212,0.12)   !important; }
+        body.dark .bg-amber-50   { background: rgba(245,158,11,0.10)  !important; }
+        body.dark .bg-purple-100 { background: rgba(139,92,246,0.15)  !important; }
+        body.dark .bg-violet-50, body.dark .bg-indigo-50 { background: rgba(99,102,241,0.13) !important; }
+        body.dark .bg-white      { background: #1E293B !important; }
+
+        /* ── Text on light bg boxes ── */
+        body.dark .text-gray-800  { color: #E2E8F0 !important; }
+        body.dark .text-gray-700  { color: #CBD5E1 !important; }
+        body.dark .text-gray-600  { color: #94A3B8 !important; }
+        body.dark .text-gray-400  { color: #64748B !important; }
+        body.dark .text-gray-300  { color: #475569 !important; }
+        body.dark .text-amber-700 { color: #FCD34D !important; }
+        body.dark .text-amber-600 { color: #FBBF24 !important; }
+        body.dark .text-indigo-700 { color: #A5B4FC !important; }
+        body.dark .text-indigo-600 { color: #818CF8 !important; }
+        body.dark .text-emerald-600 { color: #34D399 !important; }
+        body.dark .text-orange-500  { color: #FB923C !important; }
+        body.dark .text-cyan-600    { color: #22D3EE !important; }
+        body.dark .text-purple-600  { color: #C084FC !important; }
+        body.dark .text-red-500     { color: #F87171 !important; }
+        body.dark .text-green-500   { color: #4ADE80 !important; }
+        body.dark .text-violet-600  { color: #C4B5FD !important; }
+        body.dark .text-violet-700  { color: #A78BFA !important; }
+
+        /* ── Borders ── */
+        body.dark .border-amber-200 { border-color: rgba(245,158,11,0.25) !important; }
+        body.dark .border-amber-300 { border-color: rgba(245,158,11,0.3)  !important; }
+        body.dark .border-green-300 { border-color: rgba(16,185,129,0.3)  !important; }
+        body.dark .border-indigo-200 { border-color: rgba(99,102,241,0.25) !important; }
+        body.dark .border-red-100   { border-color: rgba(239,68,68,0.2)   !important; }
+        body.dark .border-green-100 { border-color: rgba(16,185,129,0.2)  !important; }
+        body.dark .border-violet-300 { border-color: rgba(139,92,246,0.35) !important; }
+
+        /* ── Accordion import header ── */
+        body.dark #acc-import { background: rgba(245,158,11,0.08) !important; }
+        body.dark button[onclick*="acc-import"] { background: rgba(245,158,11,0.10) !important; }
+        body.dark button[onclick*="acc-import"]:hover { background: rgba(245,158,11,0.18) !important; }
+
+        /* ── Inputs / Textarea / Select ── */
+        body.dark input, body.dark textarea, body.dark select {
+            color: #F1F5F9 !important;
+            background-color: #334155 !important;
+            border-color: #475569 !important;
+        }
+        body.dark input::placeholder, body.dark textarea::placeholder { color: #64748B !important; }
+
+        /* ── Quiz progress badge ── */
+        body.dark .bg-gray-200 { background: #334155 !important; }
+        body.dark .text-gray-700.bg-gray-200 { color: #E2E8F0 !important; }
+
+        /* ── Tips section cards ── */
+        body.dark code { background: #334155 !important; color: #94A3B8 !important; }
+        body.dark kbd  { background: #334155 !important; color: #94A3B8 !important; border-color:#475569 !important; }
+
+        /* ── AI Prompt screen ── */
+        body.dark .bg-indigo-50 table { color: #CBD5E1; }
+        body.dark #ai-output-box { border-color: rgba(139,92,246,0.4) !important; }
+        body.dark #ai-prompt-text { background: #0F172A !important; color: #C4B5FD !important; border-color:#334155 !important; }
+        body.dark .ai-count-btn, body.dark .ai-type-btn,
+        body.dark .ai-level-btn, body.dark .ai-lang-btn {
+            background: #1E293B !important; border-color: #334155 !important; color: #94A3B8 !important;
+        }
+        body.dark .ai-count-btn.active, body.dark .ai-level-btn.active,
+        body.dark .ai-lang-btn.active, body.dark .ai-type-btn.active {
+            background: rgba(124,58,237,0.2) !important; color: #C4B5FD !important; border-color:#7C3AED !important;
+        }
+
+        /* ── Modal ── */
+        body.dark #modal-create-content { background: #1E293B; }
+        body.dark .quick-subject-chip { background: #334155; color: #94A3B8; }
 
         /* MathJax overflow & sizing */
         .math-content { overflow-x: auto; max-width: 100%; }
@@ -155,12 +255,12 @@
         .rb-easy  { background: linear-gradient(135deg,#10B981,#059669); }
 
         /* Keyboard hint */
-        .kbd { display:inline-block; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); border-radius:5px; padding:1px 6px; font-size:10px; font-family:monospace; color:rgba(255,255,255,0.6); }
+        .kbd { display:inline-block; background:var(--surface2); border:1px solid var(--border); border-radius:5px; padding:1px 6px; font-size:10px; font-family:monospace; color:var(--text2); }
 
         /* Mode selector chips */
-        .mode-chip { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; transition: all 0.2s; border: 1.5px solid transparent; cursor: pointer; }
-        .mode-chip.active { background: white; color: #4F46E5; }
-        .mode-chip:not(.active) { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
+        .mode-chip { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; transition: all 0.2s; border: 1.5px solid var(--border); cursor: pointer; }
+        .mode-chip.active { background: #4F46E5; color: white; border-color: #4F46E5; }
+        .mode-chip:not(.active) { background: var(--surface2); color: var(--text2); }
 
         /* Progress dots */
         #study-dots { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; max-width:280px; }
@@ -169,8 +269,8 @@
         .study-dot.done-good   { background:#3B82F6; }
         .study-dot.done-hard   { background:#F59E0B; }
         .study-dot.done-again  { background:#EF4444; }
-        .study-dot.current     { background:white; }
-        .study-dot.pending     { background:rgba(255,255,255,0.2); }
+        .study-dot.current     { background:#4F46E5; }
+        .study-dot.pending     { background:var(--border); }
 
         /* Study session end screen embedded */
         #study-session-end { display:none; }
@@ -204,12 +304,12 @@
         .tts-btn {
             display: inline-flex; align-items: center; justify-content: center;
             width: 32px; height: 32px; border-radius: 50%;
-            background: rgba(255,255,255,0.15); border: none; cursor: pointer;
-            transition: all 0.2s; flex-shrink: 0; color: white;
+            background: var(--surface2); border: 1px solid var(--border); cursor: pointer;
+            transition: all 0.2s; flex-shrink: 0; color: var(--text2);
         }
-        .tts-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
+        .tts-btn:hover { background: rgba(99,102,241,0.15); color: #6366F1; transform: scale(1.1); }
         .tts-btn:active { transform: scale(0.92); }
-        .tts-btn.speaking { background: rgba(99,102,241,0.5); }
+        .tts-btn.speaking { background: rgba(99,102,241,0.25); color: #6366F1; }
         /* On white card background */
         .tts-btn-card {
             position: absolute; top: 8px; right: 8px;
@@ -250,6 +350,48 @@
         }
         .sfx-correct { animation: correctFlash 0.5s ease-out; }
         .sfx-wrong   { animation: wrongShake 0.4s ease-in-out; }
+
+        /* ── Màn hình học phải fill đúng kích thước container ── */
+        /* position:absolute + inset:0 bên trong #main-area (position:relative)
+           đảm bảo màn hình luôn đúng kích thước bất kể overflow:auto của cha */
+        #screen-study-flashcard.screen-active,
+        #screen-review.screen-active {
+            position: absolute !important;
+            top: 0; left: 0; width: 100%;
+            /* Trừ nav height để không bị che bởi fixed nav */
+            height: calc(100% - 52px - env(safe-area-inset-bottom, 0px));
+            z-index: 10;
+            overflow: hidden;
+            transform: scale(1) !important;
+            opacity: 1 !important;
+        }
+        /* screen-review cần scroll bên trong khi nội dung dài */
+        #screen-review.screen-active {
+            overflow-y: auto;
+        }
+        /* Khi màn hình học active, ẩn padding-bottom của main-area */
+        #main-area:has(#screen-study-flashcard.screen-active),
+        #main-area:has(#screen-review.screen-active) {
+            overflow: hidden;
+        }
+
+        /* ═══ AI PROMPT BUILDER ═══ */
+        .ai-count-btn, .ai-type-btn, .ai-level-btn, .ai-lang-btn {
+            border-color: var(--border); color: var(--text2); background: var(--surface2);
+            cursor: pointer; transition: all 0.18s;
+        }
+        .ai-count-btn.active, .ai-level-btn.active, .ai-lang-btn.active {
+            border-color: #7C3AED; color: #7C3AED; background: #F5F3FF;
+            box-shadow: 0 0 0 2px rgba(124,58,237,0.15);
+        }
+        .ai-type-btn.active {
+            border-color: #7C3AED; color: #5B21B6; background: #F5F3FF;
+            box-shadow: 0 0 0 2px rgba(124,58,237,0.15);
+        }
+        body.dark .ai-count-btn.active, body.dark .ai-level-btn.active,
+        body.dark .ai-lang-btn.active, body.dark .ai-type-btn.active {
+            background: rgba(124,58,237,0.2); color: #C4B5FD;
+        }
     </style>
 </head>
 <body class="h-screen w-full flex justify-center" style="background-color:var(--bg)">
@@ -268,7 +410,7 @@
     </header>
 
     <!-- Main -->
-    <main class="flex-1 relative overflow-y-auto no-scrollbar pb-16" id="main-area" style="background-color:var(--bg)">
+    <main class="flex-1 relative overflow-y-auto no-scrollbar" id="main-area" style="background-color:var(--bg); padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px))">
 
         <!-- ═══════════════════════════════════
              SCREEN: HOME
@@ -392,21 +534,21 @@
         <!-- ═══════════════════════════════════
              SCREEN: SRS REVIEW SESSION
         ════════════════════════════════════ -->
-        <div id="screen-review" class="screen-transition screen-hidden p-5 flex flex-col items-center" style="background:#0F172A; min-height:100%">
+        <div id="screen-review" class="screen-transition screen-hidden p-5 flex flex-col items-center" style="background-color:var(--bg)">
 
             <!-- Progress bar top -->
             <div class="w-full mb-5">
-                <div class="flex justify-between text-white/60 text-xs mb-1">
+                <div class="flex justify-between text-sub text-xs mb-1">
                     <span id="review-progress-text">0 / 0</span>
                     <span id="review-queue-remaining"></span>
                 </div>
-                <div class="bg-white/10 rounded-full h-2 overflow-hidden">
-                    <div id="review-progress-bar" class="bg-indigo-400 h-2 rounded-full transition-all duration-500" style="width:0%"></div>
+                <div class="surface2 rounded-full h-2 overflow-hidden border border-theme">
+                    <div id="review-progress-bar" class="bg-indigo-500 h-2 rounded-full transition-all duration-500" style="width:0%"></div>
                 </div>
             </div>
 
             <!-- Topic label -->
-            <p id="review-topic-label" class="text-white/40 text-xs mb-3 self-start px-1"></p>
+            <p id="review-topic-label" class="text-sub text-xs mb-3 self-start px-1"></p>
 
             <!-- 3D Card -->
             <div class="w-full max-w-sm perspective-1000 cursor-pointer mb-5" style="aspect-ratio:3/4" onclick="ui.flipReviewCard()">
@@ -431,7 +573,7 @@
 
             <!-- Rating buttons (shown after flip) -->
             <div id="review-rating" class="hidden w-full max-w-sm">
-                <p class="text-white/50 text-xs text-center mb-3">Bạn nhớ thẻ này thế nào?</p>
+                <p class="text-sub text-xs text-center mb-3">Bạn nhớ thẻ này thế nào?</p>
                 <div class="grid grid-cols-3 gap-3 mb-4">
                     <button onclick="app.rateReviewCard(1)" class="rating-hard text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition flex flex-col items-center gap-1">
                         <span class="text-2xl">😓</span>
@@ -450,7 +592,7 @@
                     </button>
                 </div>
                 <!-- Skip -->
-                <button onclick="app.skipReviewCard()" class="w-full py-2 bg-white/10 text-white/50 rounded-xl text-xs hover:bg-white/20 transition">
+                <button onclick="app.skipReviewCard()" class="w-full py-2 surface2 border border-theme text-sub rounded-xl text-xs hover:opacity-80 transition">
                     Bỏ qua thẻ này
                 </button>
             </div>
@@ -533,68 +675,95 @@
                 </div>
             </div>
 
-            <!-- Import CSV / XLSX -->
-            <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3">
-                <div class="flex items-center gap-2 mb-2">
-                    <i class="fas fa-file-import text-amber-500 text-base"></i>
-                    <p class="text-xs font-bold text-amber-700">Import từ CSV hoặc Excel (.xlsx)</p>
-                </div>
-                <p class="text-xs text-amber-600 mb-2">Cột A: Mặt trước &nbsp;|&nbsp; Cột B: Mặt sau &nbsp;|&nbsp; Cột C: Ghi chú (tuỳ chọn)</p>
-                <div class="flex gap-2 flex-wrap">
-                    <label class="shrink-0 bg-amber-500 text-white text-xs px-3 py-2 rounded-lg cursor-pointer hover:bg-amber-600 transition font-semibold flex items-center gap-1.5">
-                        <i class="fas fa-upload"></i> Chọn file
-                        <input type="file" accept=".csv,.txt,.xlsx,.xls" class="hidden" onchange="app.importFile(this)">
-                    </label>
-                    <button onclick="app.downloadSampleCSV()" class="shrink-0 bg-white border border-amber-300 text-amber-700 text-xs px-3 py-2 rounded-lg hover:bg-amber-50 transition font-semibold flex items-center gap-1.5">
-                        <i class="fas fa-download"></i> Mẫu CSV
-                    </button>
-                    <button onclick="app.downloadSampleXLSX()" class="shrink-0 bg-white border border-green-300 text-green-700 text-xs px-3 py-2 rounded-lg hover:bg-green-50 transition font-semibold flex items-center gap-1.5">
-                        <i class="fas fa-file-excel"></i> Mẫu XLSX
-                    </button>
-                </div>
-            </div>
-
-            <!-- Add card form -->
-            <div class="surface rounded-xl shadow-sm border border-theme p-4 mb-3">
-                <h4 class="text-xs font-bold text-sub mb-2 uppercase tracking-wider">Thêm thẻ mới</h4>
-                <div class="space-y-2">
-                    <input type="text" id="new-card-front" placeholder="Mặt trước… VD: Tính $x^2+1$ khi $x=3$" class="w-full px-3 py-2 surface2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm text-main" oninput="app.updateMathPreview()">
-                    <textarea id="new-card-back" placeholder="Mặt sau… VD: $$\frac{-b\pm\sqrt{b^2-4ac}}{2a}$$" rows="2" class="w-full px-3 py-2 surface2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm text-main resize-none" oninput="app.updateMathPreview()"></textarea>
-                    <!-- Live math preview -->
-                    <div id="math-preview-wrap" class="hidden surface2 border border-theme rounded-lg p-3">
-                        <p class="text-[10px] text-sub font-semibold uppercase mb-1">Xem trước</p>
-                        <div id="math-preview" class="math-content text-main text-sm"></div>
+            <!-- ══ ACCORDION: Import CSV / XLSX ══ -->
+            <div class="border border-amber-200 rounded-xl mb-3 overflow-hidden">
+                <button onclick="ui.toggleAccordion('acc-import','icon-import')"
+                    class="w-full flex items-center justify-between px-3 py-2.5 bg-amber-50 hover:bg-amber-100 transition cursor-pointer">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-file-import text-amber-500 text-sm"></i>
+                        <span class="text-xs font-bold text-amber-700">Import từ CSV hoặc Excel (.xlsx)</span>
                     </div>
-                    <p class="math-hint">Công thức toán: <code>$x^2$</code> (inline) hoặc <code>$$\frac{a}{b}$$</code> (display)</p>
-                    <div class="flex gap-2">
-                        <button onclick="app.addFlashcard()" class="flex-1 py-2 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition text-sm">
-                            <i class="fas fa-check mr-1"></i> Lưu thẻ
-                        </button>
-                        <button onclick="app.addFlashcardAndSync()" id="btn-save-sync" class="hidden shrink-0 py-2 px-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition text-sm" title="Lưu thẻ & đồng bộ Sheet">
-                            <i class="fas fa-check mr-1"></i><i class="fas fa-cloud-upload-alt"></i>
-                        </button>
-                    </div>
-                    <!-- Sync status chip -->
-                    <div id="sync-status-chip" class="hidden items-center gap-2 text-xs px-3 py-1.5 rounded-lg">
-                        <span id="sync-status-icon"></span>
-                        <span id="sync-status-msg"></span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="font-semibold text-main text-sm">Danh sách thẻ (<span id="flashcard-count">0</span>)</h3>
-                <button onclick="app.startTopicReview()" id="btn-topic-review" class="text-xs text-orange-500 font-semibold bg-orange-50 px-2 py-1 rounded-lg hidden">
-                    <i class="fas fa-redo mr-1"></i>Ôn thẻ đến hạn
+                    <i id="icon-import" class="fas fa-chevron-down text-amber-400 text-xs transition-transform duration-300"></i>
                 </button>
+                <div id="acc-import" class="hidden px-3 pb-3 pt-2 bg-amber-50">
+                    <p class="text-xs text-amber-600 mb-2">Cột A: Mặt trước &nbsp;|&nbsp; Cột B: Mặt sau &nbsp;|&nbsp; Cột C: Ghi chú (tuỳ chọn)</p>
+                    <div class="flex gap-2 flex-wrap">
+                        <label class="shrink-0 bg-amber-500 text-white text-xs px-3 py-2 rounded-lg cursor-pointer hover:bg-amber-600 transition font-semibold flex items-center gap-1.5">
+                            <i class="fas fa-upload"></i> Chọn file
+                            <input type="file" accept=".csv,.txt,.xlsx,.xls" class="hidden" onchange="app.importFile(this)">
+                        </label>
+                        <button onclick="app.downloadSampleCSV()" class="shrink-0 bg-white border border-amber-300 text-amber-700 text-xs px-3 py-2 rounded-lg hover:bg-amber-50 transition font-semibold flex items-center gap-1.5">
+                            <i class="fas fa-download"></i> Mẫu CSV
+                        </button>
+                        <button onclick="app.downloadSampleXLSX()" class="shrink-0 bg-white border border-green-300 text-green-700 text-xs px-3 py-2 rounded-lg hover:bg-green-50 transition font-semibold flex items-center gap-1.5">
+                            <i class="fas fa-file-excel"></i> Mẫu XLSX
+                        </button>
+                    </div>
+                </div>
             </div>
-            <div id="flashcards-list" class="space-y-2 pb-6"></div>
+
+            <!-- ══ ACCORDION: Thêm thẻ mới ══ -->
+            <div class="surface border border-theme rounded-xl shadow-sm mb-3 overflow-hidden">
+                <button onclick="ui.toggleAccordion('acc-add-card','icon-add-card')"
+                    class="w-full flex items-center justify-between px-4 py-2.5 surface hover:surface2 transition cursor-pointer">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-plus-circle text-indigo-400 text-sm"></i>
+                        <span class="text-xs font-bold text-sub uppercase tracking-wider">Thêm thẻ mới</span>
+                    </div>
+                    <i id="icon-add-card" class="fas fa-chevron-down text-sub text-xs transition-transform duration-300"></i>
+                </button>
+                <div id="acc-add-card" class="hidden px-4 pb-4 pt-1">
+                    <div class="space-y-2">
+                        <input type="text" id="new-card-front" placeholder="Mặt trước… VD: Tính $x^2+1$ khi $x=3$" class="w-full px-3 py-2 surface2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm text-main" oninput="app.updateMathPreview()">
+                        <textarea id="new-card-back" placeholder="Mặt sau… VD: $$\frac{-b\pm\sqrt{b^2-4ac}}{2a}$$" rows="2" class="w-full px-3 py-2 surface2 border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm text-main resize-none" oninput="app.updateMathPreview()"></textarea>
+                        <!-- Live math preview -->
+                        <div id="math-preview-wrap" class="hidden surface2 border border-theme rounded-lg p-3">
+                            <p class="text-[10px] text-sub font-semibold uppercase mb-1">Xem trước</p>
+                            <div id="math-preview" class="math-content text-main text-sm"></div>
+                        </div>
+                        <p class="math-hint">Công thức toán: <code>$x^2$</code> (inline) hoặc <code>$$\frac{a}{b}$$</code> (display)</p>
+                        <div class="flex gap-2">
+                            <button onclick="app.addFlashcard()" class="flex-1 py-2 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-900 transition text-sm">
+                                <i class="fas fa-check mr-1"></i> Lưu thẻ
+                            </button>
+                            <button onclick="app.addFlashcardAndSync()" id="btn-save-sync" class="hidden shrink-0 py-2 px-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition text-sm" title="Lưu thẻ & đồng bộ Sheet">
+                                <i class="fas fa-check mr-1"></i><i class="fas fa-cloud-upload-alt"></i>
+                            </button>
+                        </div>
+                        <!-- Sync status chip -->
+                        <div id="sync-status-chip" class="hidden items-center gap-2 text-xs px-3 py-1.5 rounded-lg">
+                            <span id="sync-status-icon"></span>
+                            <span id="sync-status-msg"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ ACCORDION: Danh sách thẻ ══ -->
+            <div class="surface border border-theme rounded-xl shadow-sm mb-3 overflow-hidden">
+                <button onclick="ui.toggleAccordion('acc-card-list','icon-card-list')"
+                    class="w-full flex items-center justify-between px-4 py-2.5 surface hover:surface2 transition cursor-pointer">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-layer-group text-indigo-400 text-sm"></i>
+                        <span class="text-sm font-semibold text-main">Danh sách thẻ (<span id="flashcard-count">0</span>)</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="event.stopPropagation();app.startTopicReview()" id="btn-topic-review" class="text-xs text-orange-500 font-semibold bg-orange-50 px-2 py-1 rounded-lg hidden">
+                            <i class="fas fa-redo mr-1"></i>Ôn đến hạn
+                        </button>
+                        <i id="icon-card-list" class="fas fa-chevron-down text-sub text-xs transition-transform duration-300"></i>
+                    </div>
+                </button>
+                <div id="acc-card-list" class="hidden px-3 pb-3">
+                    <div id="flashcards-list" class="space-y-2 pt-1 pb-3"></div>
+                </div>
+            </div>
         </div>
 
         <!-- ═══════════════════════════════════
              SCREEN: FLASHCARD STUDY (Anki-style)
         ════════════════════════════════════ -->
-        <div id="screen-study-flashcard" class="screen-transition screen-hidden flex flex-col" style="background:#0F172A; height:100%; overflow:hidden;">
+        <div id="screen-study-flashcard" class="screen-transition screen-hidden flex flex-col" style="overflow:hidden; background-color:var(--bg);">
 
             <!-- ① TOP BAR: mode chips + progress -->
             <div class="flex-shrink-0 px-4 pt-3 pb-2">
@@ -612,10 +781,10 @@
                 </div>
                 <!-- Progress bar -->
                 <div class="flex items-center gap-2">
-                    <div class="flex-1 bg-white/10 rounded-full h-1.5 overflow-hidden">
+                    <div class="flex-1 surface2 rounded-full h-1.5 overflow-hidden border border-theme">
                         <div id="study-progress-bar" class="h-1.5 rounded-full transition-all duration-400" style="width:0%;background:linear-gradient(90deg,#6366F1,#10B981)"></div>
                     </div>
-                    <span id="study-progress" class="text-white/50 text-xs font-mono flex-shrink-0">1/10</span>
+                    <span id="study-progress" class="text-sub text-xs font-mono flex-shrink-0">1/10</span>
                 </div>
                 <!-- Dots (≤15 cards) -->
                 <div id="study-dots" class="flex gap-1 flex-wrap justify-center mt-2"></div>
@@ -636,7 +805,7 @@
                                 <i class="fas fa-volume-up text-xs"></i>
                             </button>
                             <div id="study-front-text" class="font-bold text-gray-800 break-words w-full math-content overflow-y-auto leading-snug" style="font-size:clamp(28px,8vw,44px);max-height:130px">Câu hỏi</div>
-                            <p class="absolute bottom-2 text-[10px] text-gray-300 flip-hint flex items-center gap-1">
+                            <p class="absolute bottom-2 text-[10px] text-sub flip-hint flex items-center gap-1">
                                 <i class="fas fa-hand-pointer"></i>Chạm hoặc <span class="kbd">Space</span>
                             </p>
                         </div>
@@ -656,7 +825,7 @@
             <div class="flex-shrink-0 px-4 pb-4 pt-1" style="min-height:140px">
 
                 <!-- Mode label nhỏ -->
-                <p id="study-mode-label" class="text-center text-indigo-300/70 text-[10px] font-semibold uppercase tracking-wider mb-2"></p>
+                <p id="study-mode-label" class="text-center text-indigo-400 text-[10px] font-semibold uppercase tracking-wider mb-2"></p>
 
                 <!-- Anki: nút "Lật thẻ" (trước khi lật) -->
                 <div id="anki-show-answer" class="hidden">
@@ -667,7 +836,7 @@
 
                 <!-- Anki: 4 nút đánh giá (sau khi lật) -->
                 <div id="anki-rating-panel" class="hidden">
-                    <p class="text-white/30 text-[9px] text-center mb-1.5 uppercase tracking-wider">
+                    <p class="text-sub text-[9px] text-center mb-1.5 uppercase tracking-wider">
                         Bạn nhớ thẻ này thế nào?
                         <span class="ml-1"><span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span></span>
                     </p>
@@ -697,7 +866,7 @@
 
                 <!-- Browse: Trước / Tiếp -->
                 <div id="browse-nav" class="grid grid-cols-2 gap-2">
-                    <button onclick="app.prevStudyCard()" class="bg-white/10 text-white py-3 rounded-xl hover:bg-white/20 transition active:scale-95 text-sm font-medium">
+                    <button onclick="app.prevStudyCard()" class="surface2 border border-theme text-main py-3 rounded-xl hover:opacity-80 transition active:scale-95 text-sm font-medium">
                         <i class="fas fa-chevron-left mr-1"></i> Trước
                     </button>
                     <button onclick="app.nextStudyCard()" class="bg-indigo-600 text-white py-3 rounded-xl hover:bg-indigo-500 transition shadow-lg active:scale-95 text-sm font-medium">
@@ -709,33 +878,33 @@
             <!-- Session end panel (inline) -->
             <div id="study-session-end" class="w-full max-w-sm text-center">
                 <div class="text-5xl mb-3" id="session-end-icon">🎉</div>
-                <h3 class="text-white text-xl font-black mb-1" id="session-end-title">Hoàn thành!</h3>
-                <p class="text-white/60 text-sm mb-4" id="session-end-msg"></p>
+                <h3 class="text-main text-xl font-black mb-1" id="session-end-title">Hoàn thành!</h3>
+                <p class="text-sub text-sm mb-4" id="session-end-msg"></p>
                 <!-- Session stats bar -->
                 <div class="flex gap-2 mb-4" id="session-stat-bars"></div>
                 <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div class="bg-white/10 rounded-xl p-3">
-                        <p class="text-2xl font-black text-white" id="session-stat-again">0</p>
-                        <p class="text-xs text-red-300">😓 Quên</p>
+                    <div class="surface border border-theme rounded-xl p-3">
+                        <p class="text-2xl font-black text-main" id="session-stat-again">0</p>
+                        <p class="text-xs text-red-500">😓 Quên</p>
                     </div>
-                    <div class="bg-white/10 rounded-xl p-3">
-                        <p class="text-2xl font-black text-white" id="session-stat-good">0</p>
-                        <p class="text-xs text-green-300">😎 Nhớ tốt</p>
+                    <div class="surface border border-theme rounded-xl p-3">
+                        <p class="text-2xl font-black text-main" id="session-stat-good">0</p>
+                        <p class="text-xs text-emerald-500">😎 Nhớ tốt</p>
                     </div>
-                    <div class="bg-white/10 rounded-xl p-3">
-                        <p class="text-2xl font-black text-white" id="session-stat-xp">+0</p>
-                        <p class="text-xs text-indigo-300">XP nhận</p>
+                    <div class="surface border border-theme rounded-xl p-3">
+                        <p class="text-2xl font-black text-main" id="session-stat-xp">+0</p>
+                        <p class="text-xs text-indigo-500">XP nhận</p>
                     </div>
-                    <div class="bg-white/10 rounded-xl p-3">
-                        <p class="text-2xl font-black text-white" id="session-stat-acc">0%</p>
-                        <p class="text-xs text-blue-300">Nhớ được</p>
+                    <div class="surface border border-theme rounded-xl p-3">
+                        <p class="text-2xl font-black text-main" id="session-stat-acc">0%</p>
+                        <p class="text-xs text-blue-500">Nhớ được</p>
                     </div>
                 </div>
                 <div class="flex flex-col gap-2">
                     <button onclick="app.restartAnki()" class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition">
                         <i class="fas fa-redo mr-1"></i> Học lại thẻ Quên
                     </button>
-                    <button onclick="app.backToTopic()" class="w-full py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition">
+                    <button onclick="app.backToTopic()" class="w-full py-3 surface2 border border-theme text-main rounded-xl font-medium hover:opacity-80 transition">
                         Về Chủ đề
                     </button>
                 </div>
@@ -1412,25 +1581,185 @@
             </div>
         </div>
 
+        <!-- ═══════════════════════════════════
+             SCREEN: AI PROMPT GENERATOR
+        ════════════════════════════════════ -->
+        <div id="screen-ai-prompt" class="screen-transition screen-hidden p-4 pb-6 no-scrollbar overflow-y-auto">
+
+            <!-- Header -->
+            <div class="bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl p-4 mb-4 text-white shadow-lg">
+                <div class="flex items-center gap-3 mb-1">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">🤖</div>
+                    <div>
+                        <h2 class="font-black text-base">Sinh thẻ bằng AI</h2>
+                        <p class="text-xs opacity-75">Tạo prompt → Dán vào ChatGPT / Claude → Import về app</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FORM -->
+            <div class="surface rounded-2xl shadow-sm border border-theme p-4 mb-3 space-y-4">
+
+                <!-- Chủ đề -->
+                <div>
+                    <label class="block text-xs font-bold text-sub uppercase tracking-wider mb-1.5">
+                        <i class="fas fa-book-open text-violet-400 mr-1"></i> Chủ đề / Nội dung cần tạo thẻ
+                    </label>
+                    <input type="text" id="ai-topic"
+                        placeholder="VD: Từ vựng IELTS band 7, Công thức lượng giác lớp 11, Lịch sử Việt Nam 1945–1975…"
+                        class="w-full px-3 py-2.5 surface2 border border-theme rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400 text-sm text-main">
+                </div>
+
+                <!-- Số lượng thẻ -->
+                <div>
+                    <label class="block text-xs font-bold text-sub uppercase tracking-wider mb-1.5">
+                        <i class="fas fa-layer-group text-violet-400 mr-1"></i> Số lượng thẻ
+                    </label>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="aiPrompt.setCount(10)"  class="ai-count-btn active px-3 py-1.5 rounded-lg text-xs font-bold border transition" data-val="10">10</button>
+                        <button onclick="aiPrompt.setCount(20)"  class="ai-count-btn px-3 py-1.5 rounded-lg text-xs font-bold border transition" data-val="20">20</button>
+                        <button onclick="aiPrompt.setCount(30)"  class="ai-count-btn px-3 py-1.5 rounded-lg text-xs font-bold border transition" data-val="30">30</button>
+                        <button onclick="aiPrompt.setCount(50)"  class="ai-count-btn px-3 py-1.5 rounded-lg text-xs font-bold border transition" data-val="50">50</button>
+                        <input type="number" id="ai-count-custom" min="1" max="200" placeholder="Tự nhập"
+                            class="w-20 px-2 py-1.5 surface2 border border-theme rounded-lg text-xs text-main focus:outline-none focus:ring-2 focus:ring-violet-400"
+                            oninput="aiPrompt.setCountCustom(this.value)">
+                    </div>
+                </div>
+
+                <!-- Loại thẻ -->
+                <div>
+                    <label class="block text-xs font-bold text-sub uppercase tracking-wider mb-1.5">
+                        <i class="fas fa-th-list text-violet-400 mr-1"></i> Loại thẻ
+                    </label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="aiPrompt.setType('vocab')" class="ai-type-btn active text-left px-3 py-2 rounded-xl border-2 text-xs font-semibold transition" data-val="vocab">
+                            🔤 Từ vựng / Thuật ngữ<br><span class="font-normal opacity-60">Từ → Nghĩa + ví dụ</span>
+                        </button>
+                        <button onclick="aiPrompt.setType('qa')" class="ai-type-btn text-left px-3 py-2 rounded-xl border-2 text-xs font-semibold transition" data-val="qa">
+                            ❓ Hỏi – Đáp<br><span class="font-normal opacity-60">Câu hỏi → Câu trả lời</span>
+                        </button>
+                        <button onclick="aiPrompt.setType('fill')" class="ai-type-btn text-left px-3 py-2 rounded-xl border-2 text-xs font-semibold transition" data-val="fill">
+                            ✏️ Điền khuyết<br><span class="font-normal opacity-60">Câu có [chỗ trống] → Đáp án</span>
+                        </button>
+                        <button onclick="aiPrompt.setType('formula')" class="ai-type-btn text-left px-3 py-2 rounded-xl border-2 text-xs font-semibold transition" data-val="formula">
+                            🔢 Công thức / Định lý<br><span class="font-normal opacity-60">Tên → Công thức LaTeX</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mức độ -->
+                <div>
+                    <label class="block text-xs font-bold text-sub uppercase tracking-wider mb-1.5">
+                        <i class="fas fa-signal text-violet-400 mr-1"></i> Mức độ
+                    </label>
+                    <div class="flex gap-2">
+                        <button onclick="aiPrompt.setLevel('basic')"    class="ai-level-btn active flex-1 py-2 rounded-xl border-2 text-xs font-bold transition" data-val="basic">🌱 Cơ bản</button>
+                        <button onclick="aiPrompt.setLevel('medium')"   class="ai-level-btn flex-1 py-2 rounded-xl border-2 text-xs font-bold transition" data-val="medium">🔥 Trung bình</button>
+                        <button onclick="aiPrompt.setLevel('advanced')" class="ai-level-btn flex-1 py-2 rounded-xl border-2 text-xs font-bold transition" data-val="advanced">⚡ Nâng cao</button>
+                    </div>
+                </div>
+
+                <!-- Ngôn ngữ -->
+                <div>
+                    <label class="block text-xs font-bold text-sub uppercase tracking-wider mb-1.5">
+                        <i class="fas fa-globe text-violet-400 mr-1"></i> Ngôn ngữ thẻ
+                    </label>
+                    <div class="flex gap-2">
+                        <button onclick="aiPrompt.setLang('vi')"   class="ai-lang-btn active flex-1 py-2 rounded-xl border-2 text-xs font-bold transition" data-val="vi">🇻🇳 Tiếng Việt</button>
+                        <button onclick="aiPrompt.setLang('en')"   class="ai-lang-btn flex-1 py-2 rounded-xl border-2 text-xs font-bold transition" data-val="en">🇺🇸 English</button>
+                        <button onclick="aiPrompt.setLang('both')" class="ai-lang-btn flex-1 py-2 rounded-xl border-2 text-xs font-bold transition" data-val="both">🌐 Song ngữ</button>
+                    </div>
+                </div>
+
+                <!-- Ghi chú thêm -->
+                <div>
+                    <label class="block text-xs font-bold text-sub uppercase tracking-wider mb-1.5">
+                        <i class="fas fa-sticky-note text-violet-400 mr-1"></i> Yêu cầu thêm <span class="font-normal normal-case">(tuỳ chọn)</span>
+                    </label>
+                    <textarea id="ai-extra" rows="2" placeholder="VD: Tập trung vào thành ngữ, ưu tiên từ hay gặp trong đề thi, thêm phiên âm IPA…"
+                        class="w-full px-3 py-2 surface2 border border-theme rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400 text-sm text-main resize-none"></textarea>
+                </div>
+
+                <!-- Generate button -->
+                <button onclick="aiPrompt.generate()"
+                    class="w-full py-3 rounded-xl font-black text-white text-sm active:scale-95 transition shadow-lg"
+                    style="background: linear-gradient(135deg,#7C3AED,#4F46E5)">
+                    <i class="fas fa-magic mr-2"></i>Tạo Prompt AI
+                </button>
+            </div>
+
+            <!-- OUTPUT BOX -->
+            <div id="ai-output-box" class="hidden surface border-2 border-violet-300 rounded-2xl p-4 mb-3 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-xs font-black text-violet-600 uppercase tracking-wider flex items-center gap-1">
+                        <i class="fas fa-check-circle"></i> Prompt đã sẵn sàng
+                    </p>
+                    <button onclick="aiPrompt.copy()" id="ai-copy-btn"
+                        class="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition active:scale-95">
+                        <i class="fas fa-copy"></i> Sao chép
+                    </button>
+                </div>
+                <pre id="ai-prompt-text"
+                    class="text-xs text-main whitespace-pre-wrap break-words leading-relaxed surface2 rounded-xl p-3 max-h-64 overflow-y-auto border border-theme font-mono"></pre>
+
+                <!-- How to use -->
+                <div class="mt-3 bg-indigo-50 rounded-xl p-3 space-y-1.5 text-xs text-indigo-700">
+                    <p class="font-bold mb-1">📋 Cách dùng:</p>
+                    <div class="flex gap-2"><span class="font-black shrink-0">1.</span><span>Nhấn <strong>Sao chép</strong> → Dán vào <strong>ChatGPT</strong> hoặc <strong>Claude</strong></span></div>
+                    <div class="flex gap-2"><span class="font-black shrink-0">2.</span><span>AI sẽ trả về bảng CSV 3 cột (A / B / C)</span></div>
+                    <div class="flex gap-2"><span class="font-black shrink-0">3.</span><span>Copy kết quả → Lưu thành file <code class="bg-white px-1 rounded">.csv</code> hoặc mở Excel paste vào → lưu <code class="bg-white px-1 rounded">.xlsx</code></span></div>
+                    <div class="flex gap-2"><span class="font-black shrink-0">4.</span><span>Vào <strong>Chi tiết chủ đề</strong> → <strong>Import CSV/Excel</strong> → chọn file</span></div>
+                </div>
+            </div>
+
+            <!-- Example output preview -->
+            <div class="surface rounded-2xl border border-theme p-4 mb-3">
+                <p class="text-xs font-bold text-sub uppercase tracking-wider mb-2"><i class="fas fa-eye mr-1"></i>Ví dụ định dạng AI cần trả về</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs border-collapse">
+                        <thead>
+                            <tr class="surface2">
+                                <th class="border border-theme px-2 py-1.5 text-left font-bold text-main w-1/3">Cột A – Mặt trước</th>
+                                <th class="border border-theme px-2 py-1.5 text-left font-bold text-main w-1/3">Cột B – Mặt sau</th>
+                                <th class="border border-theme px-2 py-1.5 text-left font-bold text-main w-1/3">Cột C – Ghi chú</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sub">
+                            <tr><td class="border border-theme px-2 py-1">ambiguous</td><td class="border border-theme px-2 py-1">mơ hồ, khó hiểu</td><td class="border border-theme px-2 py-1">The answer was ambiguous.</td></tr>
+                            <tr class="surface2"><td class="border border-theme px-2 py-1">Thủ đô Nhật Bản là [Tokyo]</td><td class="border border-theme px-2 py-1">Tokyo</td><td class="border border-theme px-2 py-1">Dân số ~14 triệu</td></tr>
+                            <tr><td class="border border-theme px-2 py-1">$\sin^2x + \cos^2x$</td><td class="border border-theme px-2 py-1">$= 1$</td><td class="border border-theme px-2 py-1">Hằng đẳng thức cơ bản</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-[10px] text-sub mt-2"><i class="fas fa-info-circle mr-1"></i>Điền khuyết dùng cú pháp <code class="surface2 px-1 rounded">[đáp án]</code> trong mặt trước để app nhận dạng chỗ trống.</p>
+            </div>
+
+        </div>
+
     </main>
 
     <!-- Bottom Nav -->
-    <nav id="bottom-nav" class="shrink-0 border-t flex z-20">
-        <button onclick="ui.switchToTab('home')" class="nav-btn active flex-1 py-2.5 flex flex-col items-center gap-0.5" id="nav-home">
-            <i class="fas fa-home text-xl"></i>
-            <span class="text-[10px] font-medium">Trang chủ</span>
+    <nav id="bottom-nav" class="border-t flex">
+        <button onclick="ui.switchToTab('home')" class="nav-btn active flex-1 py-1.5 flex flex-col items-center gap-0.5" id="nav-home">
+            <i class="fas fa-home text-base"></i>
+            <span class="text-[9px] font-semibold">Trang chủ</span>
         </button>
-        <button onclick="ui.switchToTab('stats')" class="nav-btn flex-1 py-2.5 flex flex-col items-center gap-0.5" id="nav-stats">
-            <i class="fas fa-chart-bar text-xl"></i>
-            <span class="text-[10px] font-medium">Thống kê</span>
+        <button onclick="ui.switchToTab('ai-prompt')" class="nav-btn flex-1 py-1.5 flex flex-col items-center gap-0.5 relative" id="nav-ai-prompt">
+            <span class="absolute -top-0.5 right-2 text-[8px] font-black px-1 rounded" style="background:#7C3AED;color:white;line-height:14px">AI</span>
+            <i class="fas fa-robot text-base"></i>
+            <span class="text-[9px] font-semibold">Sinh thẻ</span>
         </button>
-        <button onclick="ui.switchToTab('tips')" class="nav-btn flex-1 py-2.5 flex flex-col items-center gap-0.5" id="nav-tips">
-            <i class="fas fa-lightbulb text-xl"></i>
-            <span class="text-[10px] font-medium">Tips</span>
+        <button onclick="ui.switchToTab('stats')" class="nav-btn flex-1 py-1.5 flex flex-col items-center gap-0.5" id="nav-stats">
+            <i class="fas fa-chart-bar text-base"></i>
+            <span class="text-[9px] font-semibold">Thống kê</span>
         </button>
-        <button onclick="ui.switchToTab('settings')" class="nav-btn flex-1 py-2.5 flex flex-col items-center gap-0.5" id="nav-settings">
-            <i class="fas fa-cog text-xl"></i>
-            <span class="text-[10px] font-medium">Cài đặt</span>
+        <button onclick="ui.switchToTab('tips')" class="nav-btn flex-1 py-1.5 flex flex-col items-center gap-0.5" id="nav-tips">
+            <i class="fas fa-lightbulb text-base"></i>
+            <span class="text-[9px] font-semibold">Tips</span>
+        </button>
+        <button onclick="ui.switchToTab('settings')" class="nav-btn flex-1 py-1.5 flex flex-col items-center gap-0.5" id="nav-settings">
+            <i class="fas fa-cog text-base"></i>
+            <span class="text-[9px] font-semibold">Cài đặt</span>
         </button>
     </nav>
 
@@ -1785,7 +2114,7 @@ const utils = {
 //  UI
 // ═══════════════════════════════════════════════════════════
 const ui = {
-    screens: ['home','review','review-done','topic-detail','study-flashcard','study-quiz','study-fill','quiz-result','tips','stats','settings'],
+    screens: ['home','review','review-done','topic-detail','study-flashcard','study-quiz','study-fill','quiz-result','tips','stats','settings','ai-prompt'],
 
     switchScreen(id, title='Flashcard Master', showBack=false) {
         ui.screens.forEach(s => {
@@ -1805,10 +2134,11 @@ const ui = {
         State.activeTab = tab;
         document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
         document.getElementById(`nav-${tab}`).classList.add('active');
-        if (tab==='home')     { ui.renderHome(); ui.switchScreen('home','Flashcard Master'); }
-        if (tab==='tips')     { ui.switchScreen('tips','💡 Tips & Hướng dẫn'); }
-        if (tab==='stats')    { ui.renderStats(); ui.switchScreen('stats','Thống kê'); }
-        if (tab==='settings') { ui.renderSettings(); ui.switchScreen('settings','Cài đặt'); }
+        if (tab==='home')      { ui.renderHome(); ui.switchScreen('home','Flashcard Master'); }
+        if (tab==='tips')      { ui.switchScreen('tips','💡 Tips & Hướng dẫn'); }
+        if (tab==='stats')     { ui.renderStats(); ui.switchScreen('stats','Thống kê'); }
+        if (tab==='settings')  { ui.renderSettings(); ui.switchScreen('settings','Cài đặt'); }
+        if (tab==='ai-prompt') { ui.switchScreen('ai-prompt','🤖 Sinh thẻ bằng AI'); }
     },
 
     // ─── HOME ───────────────────────────────
@@ -2069,6 +2399,16 @@ const ui = {
     hideConfirm() {
         const m=document.getElementById('modal-confirm');
         m.classList.add('hidden'); m.classList.remove('flex');
+    },
+
+    // ─── ACCORDION TOGGLE ────────────────────
+    toggleAccordion(bodyId, iconId) {
+        const body = document.getElementById(bodyId);
+        const icon = document.getElementById(iconId);
+        if (!body) return;
+        const isOpen = !body.classList.contains('hidden');
+        body.classList.toggle('hidden', isOpen);
+        if (icon) icon.style.transform = isOpen ? '' : 'rotate(180deg)';
     },
 
     // ─── CARD FLIP ───────────────────────────
@@ -4351,6 +4691,123 @@ app.gsToggleAutoLoad = function() {
     if (tog)   tog.style.background   = on ? '#4F46E5' : '';
     if (thumb) thumb.style.transform  = on ? 'translateX(24px)' : 'translateX(0)';
     utils.showToast(on ? '☁️ Tự động tải Sheet: BẬT' : '☁️ Tự động tải Sheet: TẮT');
+};
+
+// ═══════════════════════════════════════════
+//  AI PROMPT BUILDER
+// ═══════════════════════════════════════════
+const aiPrompt = {
+    state: { count: 10, type: 'vocab', level: 'basic', lang: 'vi' },
+
+    _setActive(cls, val) {
+        document.querySelectorAll(`.${cls}`).forEach(b => {
+            const isActive = (b.dataset.val === String(val));
+            b.classList.toggle('active', isActive);
+        });
+    },
+
+    setCount(n) {
+        this.state.count = n;
+        document.getElementById('ai-count-custom').value = '';
+        this._setActive('ai-count-btn', n);
+    },
+
+    setCountCustom(v) {
+        const n = parseInt(v);
+        if (n > 0) {
+            this.state.count = n;
+            this._setActive('ai-count-btn', -1); // deselect presets
+        }
+    },
+
+    setType(t)  { this.state.type  = t; this._setActive('ai-type-btn', t); },
+    setLevel(l) { this.state.level = l; this._setActive('ai-level-btn', l); },
+    setLang(lg) { this.state.lang  = lg; this._setActive('ai-lang-btn', lg); },
+
+    generate() {
+        const topic = (document.getElementById('ai-topic').value || '').trim();
+        const extra = (document.getElementById('ai-extra').value || '').trim();
+        if (!topic) { utils.showToast('⚠️ Vui lòng nhập chủ đề!'); return; }
+
+        const { count, type, level, lang } = this.state;
+
+        const levelMap   = { basic: 'cơ bản (dành cho người mới bắt đầu)', medium: 'trung bình', advanced: 'nâng cao' };
+        const langMapFront = { vi: 'Tiếng Việt', en: 'English', both: 'song ngữ Anh–Việt' };
+        const langMapBack  = { vi: 'Tiếng Việt', en: 'English', both: 'song ngữ (Tiếng Anh trước, dịch Tiếng Việt sau dấu " – ")' };
+
+        const typeInstructions = {
+            vocab: `Loại thẻ: TỪ VỰNG / THUẬT NGỮ
+- Cột A (Mặt trước): từ/thuật ngữ bằng ${langMapFront[lang]}
+- Cột B (Mặt sau): định nghĩa / nghĩa tiếng Việt ngắn gọn, rõ ràng
+- Cột C (Ghi chú): 1 câu ví dụ ngắn hoặc mẹo nhớ`,
+
+            qa: `Loại thẻ: HỎI – ĐÁP
+- Cột A (Mặt trước): câu hỏi rõ ràng, ngắn gọn (${langMapFront[lang]})
+- Cột B (Mặt sau): câu trả lời súc tích (${langMapBack[lang]})
+- Cột C (Ghi chú): giải thích thêm hoặc ví dụ minh họa`,
+
+            fill: `Loại thẻ: ĐIỀN KHUYẾT
+- Cột A (Mặt trước): câu hoàn chỉnh có đáp án bị thay bằng [đáp án], ví dụ: "Thủ đô của Pháp là [Paris]"
+- Cột B (Mặt sau): chỉ ghi đúng phần đáp án điền vào chỗ trống (không cần viết lại cả câu)
+- Cột C (Ghi chú): giải thích tại sao hoặc ngữ cảnh bổ sung`,
+
+            formula: `Loại thẻ: CÔNG THỨC / ĐỊNH LÝ / QUY TẮC
+- Cột A (Mặt trước): tên công thức / định lý / quy tắc
+- Cột B (Mặt sau): công thức hoặc phát biểu chính xác (dùng cú pháp LaTeX: $...$ cho inline, $$...$$ cho display)
+- Cột C (Ghi chú): điều kiện áp dụng hoặc ví dụ tính toán minh họa`
+        };
+
+        const prompt = `Tạo ${count} thẻ flashcard về chủ đề: "${topic}"
+Mức độ: ${levelMap[level]}
+Ngôn ngữ: ${langMapFront[lang]}
+${extra ? `Yêu cầu đặc biệt: ${extra}` : ''}
+
+${typeInstructions[type]}
+
+━━━ QUY TẮC ĐỊNH DẠNG ĐẦU RA (bắt buộc tuân theo) ━━━
+• Xuất ra đúng ${count} dòng, mỗi dòng là 1 thẻ
+• Mỗi dòng gồm 3 cột, phân cách bằng dấu TAB (\\t):
+  [Cột A]\\t[Cột B]\\t[Cột C]
+• KHÔNG thêm dòng tiêu đề (header)
+• KHÔNG đánh số thứ tự
+• KHÔNG thêm ký tự đặc biệt ở đầu dòng
+• Nếu nội dung cột có dấu phẩy, đặt trong dấu ngoặc kép ""
+• Cột C có thể để trống nếu không cần ghi chú
+• Mỗi thẻ phải độc lập, không trùng lặp nhau
+• Sắp xếp từ dễ → khó trong chủ đề
+
+Ví dụ định dạng đúng (3 thẻ mẫu):
+Mặt trước thẻ 1\\tMặt sau thẻ 1\\tGhi chú thẻ 1
+Mặt trước thẻ 2\\tMặt sau thẻ 2\\t
+Mặt trước thẻ 3\\tMặt sau thẻ 3\\tGhi chú thẻ 3
+
+Bắt đầu xuất ${count} thẻ ngay bây giờ:`;
+
+        document.getElementById('ai-prompt-text').textContent = prompt;
+        document.getElementById('ai-output-box').classList.remove('hidden');
+        document.getElementById('ai-output-box').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+
+    copy() {
+        const text = document.getElementById('ai-prompt-text').textContent;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('ai-copy-btn');
+                btn.innerHTML = '<i class="fas fa-check"></i> Đã sao chép!';
+                btn.style.background = '#059669';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i> Sao chép';
+                    btn.style.background = '';
+                }, 2000);
+                utils.showToast('✅ Đã sao chép prompt!');
+            });
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = text; document.body.appendChild(ta);
+            ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+            utils.showToast('✅ Đã sao chép prompt!');
+        }
+    }
 };
 
 window.onload = () => {
