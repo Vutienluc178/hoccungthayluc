@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flashcard Master v3</title>
+    <title>Ghi nhớ thần tốc</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -351,6 +351,33 @@
         .sfx-correct { animation: correctFlash 0.5s ease-out; }
         .sfx-wrong   { animation: wrongShake 0.4s ease-in-out; }
 
+        /* ── Card detail modal ── */
+        #card-detail-modal { animation: searchFadeIn 0.2s ease; }
+        #card-detail-modal.hidden { display:none!important; }
+        .card-detail-face {
+            border-radius: 20px; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; min-height: 140px; position: relative;
+            border: 3px solid;
+        }
+        .card-detail-face.front { background:#EEF2FF; border-color:#6366F1; }
+        .card-detail-face.back  { background:#ECFDF5; border-color:#10B981; }
+        body.dark .card-detail-face.front { background:#1E1B4B; border-color:#4338CA; }
+        body.dark .card-detail-face.back  { background:#022C22; border-color:#059669; }
+        /* auto-fit text: JS sẽ set font-size, CSS chỉ đặt max/min */
+        .autofit-text {
+            word-break: break-word; overflow-wrap: break-word;
+            max-height: 100%; overflow: hidden;
+            line-height: 1.35;
+        }
+
+        /* ── Search overlay ── */
+        #search-overlay { animation: searchFadeIn 0.2s ease; }
+        #search-overlay.hidden { display: none !important; }
+        @keyframes searchFadeIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+        #search-results mark { font-style:normal; }
+        .active\:scale-98:active { transform: scale(0.98); }
+
         /* ── Màn hình học phải fill đúng kích thước container ── */
         /* position:absolute + inset:0 bên trong #main-area (position:relative)
            đảm bảo màn hình luôn đúng kích thước bất kể overflow:auto của cha */
@@ -405,9 +432,102 @@
         <button id="back-btn" class="hidden text-white p-2 rounded-full hover:bg-white/20 transition">
             <i class="fas fa-arrow-left text-lg"></i>
         </button>
-        <h1 id="header-title" class="text-lg font-bold flex-1 text-center">Flashcard Master</h1>
-        <div class="w-10"></div>
+        <div class="flex-1 text-center">
+            <p id="header-title" class="text-base font-black tracking-tight leading-tight" style="font-family:'Inter',sans-serif;letter-spacing:-0.02em">Ghi nhớ thần tốc</p>
+            <p class="text-white/60 leading-tight" style="font-size:9px;font-family:'Inter',sans-serif;font-weight:500;letter-spacing:0.01em">Tác giả: Vũ Tiến Lực · 0969 068 849 · THPT Nguyễn Hữu Cảnh</p>
+        </div>
+        <button onclick="search.open()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition active:scale-90" title="Tìm kiếm">
+            <i class="fas fa-search text-base"></i>
+        </button>
     </header>
+
+    <!-- ══ CARD DETAIL MODAL ══ -->
+    <div id="card-detail-modal" class="hidden fixed inset-0 z-[300] flex items-end justify-center p-0" style="background:rgba(0,0,0,0.55);backdrop-filter:blur(4px)">
+        <div class="surface w-full max-w-md rounded-t-3xl shadow-2xl overflow-hidden" style="max-height:92vh;overflow-y:auto">
+            <!-- Handle bar -->
+            <div class="flex justify-center pt-3 pb-1">
+                <div class="w-10 h-1 rounded-full" style="background:var(--border)"></div>
+            </div>
+            <!-- Topic breadcrumb -->
+            <div class="flex items-center justify-between px-4 py-2">
+                <p id="cdm-breadcrumb" class="text-[11px] text-sub truncate flex-1"></p>
+                <button onclick="cardDetail.close()" class="ml-2 w-7 h-7 rounded-full surface2 flex items-center justify-center text-sub hover:text-main transition shrink-0">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+            <!-- Front card -->
+            <div class="px-4 pb-3">
+                <div class="card-detail-face front mb-3" id="cdm-front-wrap">
+                    <span class="absolute top-3 left-3 text-[9px] font-black text-indigo-400 uppercase tracking-widest">Mặt trước</span>
+                    <button onclick="app.ttsReadEl('cdm-front-text')" class="tts-btn-card absolute top-2 right-2" title="Đọc">
+                        <i class="fas fa-volume-up text-xs"></i>
+                    </button>
+                    <div id="cdm-front-text" class="autofit-text font-bold text-indigo-900 math-content w-full mt-2" style="color:var(--text)"></div>
+                </div>
+                <!-- Back card -->
+                <div class="card-detail-face back mb-3" id="cdm-back-wrap">
+                    <span class="absolute top-3 left-3 text-[9px] font-black text-emerald-600 uppercase tracking-widest">Mặt sau</span>
+                    <button onclick="app.ttsReadEl('cdm-back-text')" class="tts-btn-card absolute top-2 right-2" title="Đọc">
+                        <i class="fas fa-volume-up text-xs"></i>
+                    </button>
+                    <div id="cdm-back-text" class="autofit-text font-semibold text-emerald-900 math-content w-full mt-2" style="color:var(--text)"></div>
+                </div>
+                <!-- Note -->
+                <div id="cdm-note-wrap" class="hidden surface2 border border-theme rounded-xl px-3 py-2 mb-3">
+                    <p class="text-[9px] font-black text-sub uppercase tracking-wider mb-1">Ghi chú</p>
+                    <p id="cdm-note-text" class="text-xs text-main"></p>
+                </div>
+                <!-- SRS info -->
+                <div id="cdm-srs-wrap" class="flex gap-2 mb-4">
+                    <div class="flex-1 surface2 border border-theme rounded-xl p-2 text-center">
+                        <p class="text-[9px] text-sub uppercase font-bold mb-0.5">Ôn lần</p>
+                        <p id="cdm-srs-reps" class="text-base font-black text-main">—</p>
+                    </div>
+                    <div class="flex-1 surface2 border border-theme rounded-xl p-2 text-center">
+                        <p class="text-[9px] text-sub uppercase font-bold mb-0.5">Hệ số</p>
+                        <p id="cdm-srs-ef" class="text-base font-black text-main">—</p>
+                    </div>
+                    <div class="flex-1 surface2 border border-theme rounded-xl p-2 text-center">
+                        <p class="text-[9px] text-sub uppercase font-bold mb-0.5">Hạn ôn</p>
+                        <p id="cdm-srs-due" class="text-base font-black text-main">—</p>
+                    </div>
+                </div>
+                <!-- Go to topic -->
+                <button id="cdm-goto-btn" class="w-full py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm mb-4 hover:bg-indigo-700 transition active:scale-95">
+                    <i class="fas fa-folder-open mr-2"></i>Mở chủ đề này
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ SEARCH OVERLAY ══ -->
+    <div id="search-overlay" class="hidden fixed inset-0 z-[200] flex flex-col" style="background-color:var(--bg)">
+        <!-- Search bar -->
+        <div id="search-header" class="shrink-0 px-3 pt-3 pb-2 shadow-sm" style="background-color:var(--surface)">
+            <div class="flex items-center gap-2">
+                <div class="flex-1 relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-sub text-sm pointer-events-none"></i>
+                    <input id="search-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false"
+                        placeholder="Tìm thẻ, chủ đề… (có dấu hoặc không dấu)"
+                        class="w-full pl-9 pr-8 py-2.5 surface2 border border-theme rounded-xl text-sm text-main focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+                        oninput="search.run(this.value)">
+                    <button id="search-clear" onclick="search.clear()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-sub hover:text-main">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+                <button onclick="search.close()" class="shrink-0 text-sub hover:text-main px-2 py-2 text-sm font-medium transition">Đóng</button>
+            </div>
+            <p id="search-count" class="text-[10px] text-sub mt-1.5 px-1 hidden"></p>
+        </div>
+        <!-- Results -->
+        <div id="search-results" class="flex-1 overflow-y-auto no-scrollbar p-3 space-y-2">
+            <div id="search-empty" class="text-center pt-16 text-sub">
+                <i class="fas fa-search text-4xl opacity-20 mb-3 block"></i>
+                <p class="text-sm font-medium">Gõ từ khoá để tìm kiếm</p>
+                <p class="text-xs mt-1 opacity-60">Hỗ trợ tìm không dấu</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Main -->
     <main class="flex-1 relative overflow-y-auto no-scrollbar" id="main-area" style="background-color:var(--bg); padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px))">
@@ -558,7 +678,7 @@
                         <button class="tts-btn-card" id="tts-review-front" onclick="event.stopPropagation();app.ttsReadEl('review-front-text')" title="Đọc tiếng Anh">
                             <i class="fas fa-volume-up text-xs"></i>
                         </button>
-                        <p id="review-front-text" class="font-bold text-gray-800 break-words w-full math-content overflow-y-auto" style="font-size:clamp(26px,7.5vw,42px);max-height:55%">...</p>
+                        <p id="review-front-text" class="font-bold text-gray-800 break-words w-full math-content autofit-text" style="font-size:42px;max-height:55%">...</p>
                         <p class="absolute bottom-4 text-xs text-gray-400"><i class="fas fa-hand-pointer mr-1"></i>Chạm để xem đáp án</p>
                     </div>
                     <div class="card-back absolute w-full h-full backface-hidden bg-cyan-50 rounded-2xl flex flex-col items-center justify-center p-6 text-center border-4 border-cyan-300 rotate-y-180">
@@ -566,7 +686,7 @@
                         <button class="tts-btn-card" id="tts-review-back" onclick="event.stopPropagation();app.ttsReadEl('review-back-text')" title="Đọc tiếng Anh">
                             <i class="fas fa-volume-up text-xs"></i>
                         </button>
-                        <p id="review-back-text" class="font-medium text-gray-800 break-words w-full math-content overflow-y-auto" style="font-size:clamp(24px,7vw,38px);max-height:60%">...</p>
+                        <p id="review-back-text" class="font-medium text-gray-800 break-words w-full math-content autofit-text" style="font-size:38px;max-height:60%">...</p>
                     </div>
                 </div>
             </div>
@@ -804,7 +924,7 @@
                             <button class="tts-btn-card" id="tts-study-front" onclick="event.stopPropagation();app.ttsRead('front')" title="Đọc tiếng Anh">
                                 <i class="fas fa-volume-up text-xs"></i>
                             </button>
-                            <div id="study-front-text" class="font-bold text-gray-800 break-words w-full math-content overflow-y-auto leading-snug" style="font-size:clamp(28px,8vw,44px);max-height:130px">Câu hỏi</div>
+                            <div id="study-front-text" class="font-bold text-gray-800 break-words w-full math-content autofit-text leading-snug" style="font-size:44px;max-height:130px">Câu hỏi</div>
                             <p class="absolute bottom-2 text-[10px] text-sub flip-hint flex items-center gap-1">
                                 <i class="fas fa-hand-pointer"></i>Chạm hoặc <span class="kbd">Space</span>
                             </p>
@@ -815,7 +935,7 @@
                             <button class="tts-btn-card" id="tts-study-back" onclick="event.stopPropagation();app.ttsRead('back')" title="Đọc tiếng Anh">
                                 <i class="fas fa-volume-up text-xs"></i>
                             </button>
-                            <div id="study-back-text" class="font-medium text-gray-800 break-words w-full math-content overflow-y-auto leading-snug" style="font-size:clamp(26px,7vw,38px);max-height:130px">Đáp án</div>
+                            <div id="study-back-text" class="font-medium text-gray-800 break-words w-full math-content autofit-text leading-snug" style="font-size:38px;max-height:130px">Đáp án</div>
                         </div>
                     </div>
                 </div>
@@ -1574,10 +1694,31 @@
             </div>
 
             <!-- App info -->
-            <div class="surface rounded-2xl shadow-sm border border-theme p-4 text-center">
-                <p class="text-2xl mb-1">🎓</p>
-                <p class="font-bold text-main">Flashcard Master v3</p>
-                <p class="text-xs text-sub mt-1">Được nâng cấp với Spaced Repetition, Gamification,<br>Thống kê chi tiết & Export/Import</p>
+            <div class="rounded-2xl shadow-lg border border-indigo-200 p-5 text-center overflow-hidden relative" style="background:linear-gradient(135deg,#4F46E5 0%,#7C3AED 50%,#2563EB 100%)">
+                <!-- decorative circles -->
+                <div class="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-20" style="background:white"></div>
+                <div class="absolute -bottom-4 -left-4 w-16 h-16 rounded-full opacity-10" style="background:white"></div>
+
+                <div class="relative z-10">
+                    <p class="text-4xl mb-2">⚡</p>
+                    <p class="text-xl font-black text-white tracking-tight mb-0.5">Ghi nhớ thần tốc</p>
+                    <p class="text-xs text-white/60 mb-4">SRS · Gamification · AI Prompt</p>
+
+                    <div class="bg-white/15 rounded-xl px-4 py-3 text-left space-y-1.5">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-user-graduate text-white/70 text-xs w-4"></i>
+                            <span class="text-white font-semibold text-sm">Vũ Tiến Lực</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-phone text-white/70 text-xs w-4"></i>
+                            <span class="text-white/85 text-xs">0969 068 849</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-school text-white/70 text-xs w-4"></i>
+                            <span class="text-white/85 text-xs">THPT Nguyễn Hữu Cảnh</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2116,7 +2257,7 @@ const utils = {
 const ui = {
     screens: ['home','review','review-done','topic-detail','study-flashcard','study-quiz','study-fill','quiz-result','tips','stats','settings','ai-prompt'],
 
-    switchScreen(id, title='Flashcard Master', showBack=false) {
+    switchScreen(id, title='Ghi nhớ thần tốc', showBack=false) {
         ui.screens.forEach(s => {
             const el = document.getElementById(`screen-${s}`);
             if (el) { el.classList.remove('screen-active'); el.classList.add('screen-hidden'); }
@@ -2134,7 +2275,7 @@ const ui = {
         State.activeTab = tab;
         document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
         document.getElementById(`nav-${tab}`).classList.add('active');
-        if (tab==='home')      { ui.renderHome(); ui.switchScreen('home','Flashcard Master'); }
+        if (tab==='home')      { ui.renderHome(); ui.switchScreen('home','Ghi nhớ thần tốc'); }
         if (tab==='tips')      { ui.switchScreen('tips','💡 Tips & Hướng dẫn'); }
         if (tab==='stats')     { ui.renderStats(); ui.switchScreen('stats','Thống kê'); }
         if (tab==='settings')  { ui.renderSettings(); ui.switchScreen('settings','Cài đặt'); }
@@ -2822,6 +2963,10 @@ const app = {
         // Card content
         utils.setMath(document.getElementById('review-front-text'), item.card.front);
         utils.setMath(document.getElementById('review-back-text'),  item.card.back);
+        setTimeout(() => {
+            autoFitText(document.getElementById('review-front-text'), 42, 12);
+            autoFitText(document.getElementById('review-back-text'),  38, 12);
+        }, 60);
 
         // Update easy days label
         const easyDays=SRS.nextInterval(item.card,5);
@@ -3008,6 +3153,10 @@ const app = {
 
         utils.setMath(document.getElementById('study-front-text'), card.front);
         utils.setMath(document.getElementById('study-back-text'),  card.back);
+        setTimeout(() => {
+            autoFitText(document.getElementById('study-front-text'), 44, 12);
+            autoFitText(document.getElementById('study-back-text'),  38, 12);
+        }, 60);
         document.getElementById('study-progress').innerText=`${idx+1} / ${total}`;
         document.getElementById('study-progress-bar').style.width=`${Math.round((idx/total)*100)}%`;
 
@@ -3653,9 +3802,21 @@ const app = {
 
         const utt  = new SpeechSynthesisUtterance(clean);
         utt.lang   = 'en-US';
-        utt.rate   = parseFloat(State.settings.ttsRate) || 0.75;
+        utt.rate   = parseFloat(State.settings.ttsRate) || 1.0;
         utt.pitch  = 1;
         utt.volume = 1;
+
+        // Boost volume 2× via AudioContext GainNode
+        // (Web Speech API capped at 1.0, AudioContext có thể khuếch đại thêm)
+        try {
+            if (!app._audioCtx) {
+                app._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                app._gainNode = app._audioCtx.createGain();
+                app._gainNode.gain.value = 2.0; // 2× louder
+                app._gainNode.connect(app._audioCtx.destination);
+            }
+            if (app._audioCtx.state === 'suspended') app._audioCtx.resume();
+        } catch(e) { /* fallback: dùng volume=1 bình thường */ }
 
         const voice = app._getBestUSVoice();
         if (voice) utt.voice = voice;
@@ -4694,6 +4855,279 @@ app.gsToggleAutoLoad = function() {
 };
 
 // ═══════════════════════════════════════════
+//  AUTO-FIT TEXT
+// ═══════════════════════════════════════════
+function autoFitText(el, maxPx=42, minPx=11) {
+    if (!el) return;
+    el.style.fontSize = maxPx + 'px';
+    // Reduce font-size until text fits container height
+    while (el.scrollHeight > el.parentElement.clientHeight - 48 && parseFloat(el.style.fontSize) > minPx) {
+        el.style.fontSize = (parseFloat(el.style.fontSize) - 1) + 'px';
+    }
+}
+
+// ═══════════════════════════════════════════
+//  CARD DETAIL MODAL
+// ═══════════════════════════════════════════
+const cardDetail = {
+    open(card, subjectName, topicName, subjectId, topicId) {
+        // Breadcrumb
+        document.getElementById('cdm-breadcrumb').textContent = `${subjectName} › ${topicName}`;
+
+        // Front
+        const frontEl = document.getElementById('cdm-front-text');
+        utils.setMath(frontEl, card.front || '');
+        setTimeout(() => autoFitText(frontEl, 40, 12), 80);
+
+        // Back
+        const backEl = document.getElementById('cdm-back-text');
+        utils.setMath(backEl, card.back || '');
+        setTimeout(() => autoFitText(backEl, 40, 12), 80);
+
+        // Note
+        const noteWrap = document.getElementById('cdm-note-wrap');
+        const noteEl   = document.getElementById('cdm-note-text');
+        if (card.note && card.note.trim()) {
+            noteEl.textContent = card.note;
+            noteWrap.classList.remove('hidden');
+        } else {
+            noteWrap.classList.add('hidden');
+        }
+
+        // SRS stats
+        const srs = card.srs || {};
+        document.getElementById('cdm-srs-reps').textContent = srs.reps != null ? srs.reps : '—';
+        document.getElementById('cdm-srs-ef').textContent   = srs.ef   != null ? srs.ef.toFixed(1) : '—';
+        const due = srs.due ? (srs.due === utils.today() ? 'Hôm nay' : srs.due) : '—';
+        document.getElementById('cdm-srs-due').textContent  = due;
+
+        // Go to topic button
+        document.getElementById('cdm-goto-btn').onclick = () => {
+            this.close();
+            search._goTopic(subjectId, topicId);
+        };
+
+        document.getElementById('card-detail-modal').classList.remove('hidden');
+    },
+
+    close() {
+        document.getElementById('card-detail-modal').classList.add('hidden');
+    }
+};
+
+// Close card detail on backdrop click
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('card-detail-modal').addEventListener('click', e => {
+        if (e.target === document.getElementById('card-detail-modal')) cardDetail.close();
+    });
+});
+
+// ═══════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════
+const search = {
+    _cardCache: [],
+
+    _openCard(idx) {
+        const r = this._cardCache[idx];
+        if (!r) return;
+        cardDetail.open(r.card, r.subjectName, r.topicName, r.subjectId, r.topicId);
+    },
+
+    _norm(s) {
+        // Chuẩn hóa: bỏ dấu tiếng Việt, lowercase, bỏ khoảng trắng thừa
+        if (!s) return '';
+        return s.normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+            .toLowerCase().trim();
+    },
+
+    open() {
+        document.getElementById('search-overlay').classList.remove('hidden');
+        setTimeout(() => document.getElementById('search-input').focus(), 80);
+    },
+
+    close() {
+        document.getElementById('search-overlay').classList.add('hidden');
+        this.clear();
+    },
+
+    clear() {
+        const inp = document.getElementById('search-input');
+        inp.value = '';
+        document.getElementById('search-clear').classList.add('hidden');
+        document.getElementById('search-count').classList.add('hidden');
+        document.getElementById('search-results').innerHTML =
+            `<div id="search-empty" class="text-center pt-16 text-sub">
+                <i class="fas fa-search text-4xl opacity-20 mb-3 block"></i>
+                <p class="text-sm font-medium">Gõ từ khoá để tìm kiếm</p>
+                <p class="text-xs mt-1 opacity-60">Hỗ trợ tìm không dấu</p>
+            </div>`;
+    },
+
+    run(q) {
+        const clearBtn = document.getElementById('search-clear');
+        clearBtn.classList.toggle('hidden', !q);
+        if (!q.trim()) { this.clear(); return; }
+
+        const nq = this._norm(q);
+        const results = { topics: [], cards: [] };
+
+        // Duyệt toàn bộ data
+        (State.data || []).forEach(subj => {
+            (subj.topics || []).forEach(topic => {
+                // Kiểm tra tên chủ đề
+                const topicMatch = this._norm(subj.name).includes(nq) ||
+                                   this._norm(topic.name).includes(nq);
+
+                (topic.cards || []).forEach(card => {
+                    const nFront = this._norm(card.front || '');
+                    const nBack  = this._norm(card.back  || '');
+                    const nNote  = this._norm(card.note  || '');
+                    const cardMatch = nFront.includes(nq) || nBack.includes(nq) || nNote.includes(nq);
+
+                    if (cardMatch) {
+                        results.cards.push({
+                            subjectName: subj.name,
+                            topicName:   topic.name,
+                            topicId:     topic.id,
+                            subjectId:   subj.id,
+                            card
+                        });
+                    }
+                });
+
+                if (topicMatch && !results.topics.find(t => t.topicId === topic.id)) {
+                    results.topics.push({
+                        subjectName: subj.name,
+                        topicName:   topic.name,
+                        topicId:     topic.id,
+                        subjectId:   subj.id,
+                        cardCount:   (topic.cards || []).length
+                    });
+                }
+            });
+        });
+
+        const total = results.topics.length + results.cards.length;
+        const countEl = document.getElementById('search-count');
+        countEl.textContent = total === 0
+            ? 'Không tìm thấy kết quả'
+            : `${total} kết quả (${results.topics.length} chủ đề · ${results.cards.length} thẻ)`;
+        countEl.classList.remove('hidden');
+
+        const container = document.getElementById('search-results');
+
+        if (total === 0) {
+            container.innerHTML = `
+                <div class="text-center pt-16 text-sub">
+                    <i class="fas fa-inbox text-4xl opacity-20 mb-3 block"></i>
+                    <p class="text-sm font-medium">Không tìm thấy kết quả</p>
+                    <p class="text-xs mt-1 opacity-60">Thử từ khóa khác hoặc kiểm tra chính tả</p>
+                </div>`;
+            return;
+        }
+
+        let html = '';
+
+        // ── Chủ đề ──
+        if (results.topics.length) {
+            html += `<p class="text-[10px] font-black text-sub uppercase tracking-wider px-1 mb-1">
+                <i class="fas fa-layer-group mr-1 text-indigo-400"></i>Chủ đề (${results.topics.length})</p>`;
+            results.topics.forEach(t => {
+                html += `
+                <div onclick="search._goTopic('${t.subjectId}','${t.topicId}')"
+                    class="surface border border-theme rounded-xl px-3 py-2.5 flex items-center gap-3 cursor-pointer hover:border-indigo-300 active:scale-98 transition shadow-sm">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+                        <i class="fas fa-folder-open text-indigo-500 text-xs"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-main text-sm truncate">${this._hl(t.topicName, q)}</p>
+                        <p class="text-[10px] text-sub truncate">${this._hl(t.subjectName, q)} · ${t.cardCount} thẻ</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-sub text-xs shrink-0"></i>
+                </div>`;
+            });
+            html += '<div class="h-2"></div>';
+        }
+
+        // ── Thẻ ──
+        if (results.cards.length) {
+            // Lưu danh sách thẻ để truy xuất khi click
+            search._cardCache = results.cards;
+            html += `<p class="text-[10px] font-black text-sub uppercase tracking-wider px-1 mb-1">
+                <i class="fas fa-clone mr-1 text-emerald-400"></i>Thẻ (${results.cards.length})</p>`;
+            results.cards.slice(0, 80).forEach((r, idx) => {
+                const { card, subjectName, topicName } = r;
+                html += `
+                <div onclick="search._openCard(${idx})"
+                    class="surface border border-theme rounded-xl px-3 py-2.5 cursor-pointer hover:border-emerald-300 transition shadow-sm"
+                    style="active:transform:scale(0.98)">
+                    <div class="flex items-start gap-2 mb-1.5">
+                        <span class="shrink-0 mt-0.5 text-[9px] font-black px-1.5 py-0.5 rounded" style="background:#EEF2FF;color:#4F46E5">Q</span>
+                        <p class="text-sm font-semibold text-main leading-snug">${this._hl(card.front || '', q)}</p>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <span class="shrink-0 mt-0.5 text-[9px] font-black px-1.5 py-0.5 rounded" style="background:#ECFDF5;color:#059669">A</span>
+                        <p class="text-sm text-sub leading-snug">${this._hl(card.back || '', q)}</p>
+                    </div>
+                    ${card.note ? `<p class="text-[10px] text-sub mt-1.5 pl-6 opacity-70">${this._hl(card.note, q)}</p>` : ''}
+                    <div class="flex items-center justify-between mt-2">
+                        <p class="text-[9px] text-sub opacity-50">${subjectName} › ${topicName}</p>
+                        <span class="text-[9px] font-semibold text-indigo-500 flex items-center gap-1"><i class="fas fa-expand-alt"></i>Xem chi tiết</span>
+                    </div>
+                </div>`;
+            });
+            if (results.cards.length > 80) {
+                html += `<p class="text-center text-xs text-sub py-2">... và ${results.cards.length - 80} thẻ khác</p>`;
+            }
+        }
+
+        container.innerHTML = html;
+    },
+
+    // Highlight từ khóa (cả có dấu và không dấu)
+    _hl(text, q) {
+        if (!text || !q) return this._esc(text);
+        try {
+            // Build regex từ pattern đã bỏ dấu
+            const nq = this._norm(q);
+            const nt = this._norm(text);
+            let result = '';
+            let ti = 0, si = 0;
+            while (si < nt.length) {
+                if (nt.startsWith(nq, si)) {
+                    result += `<mark class="bg-yellow-200 text-gray-800 rounded px-0.5" style="background:#FEF08A">${this._esc(text.slice(ti, ti + nq.length))}</mark>`;
+                    si += nq.length; ti += nq.length;
+                } else {
+                    result += this._esc(text[ti] || '');
+                    si++; ti++;
+                }
+            }
+            return result;
+        } catch(e) { return this._esc(text); }
+    },
+
+    _esc(s) {
+        return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    },
+
+    _goTopic(subjectId, topicId) {
+        this.close();
+        // Tìm subject và topic trong data
+        const subj = (State.data||[]).find(s => s.id === subjectId);
+        if (!subj) return;
+        const topic = (subj.topics||[]).find(t => t.id === topicId);
+        if (!topic) return;
+        State.currentSubjectId = subjectId;
+        State.currentTopicId   = topicId;
+        ui.renderTopicDetail(subj, topic);
+        ui.switchScreen('topic-detail', topic.name, true);
+    }
+};
+
+// ═══════════════════════════════════════════
 //  AI PROMPT BUILDER
 // ═══════════════════════════════════════════
 const aiPrompt = {
@@ -4812,6 +5246,13 @@ Bắt đầu xuất ${count} thẻ ngay bây giờ:`;
 
 window.onload = () => {
     app.init();
+
+    // Escape đóng search overlay
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !document.getElementById('search-overlay').classList.contains('hidden')) {
+            search.close();
+        }
+    });
     // Auto-load từ Google Sheets khi mở app
     if (State.settings.gsAutoLoad && GS.getURL()) {
         setTimeout(() => lib.gsLoad(), 800);
