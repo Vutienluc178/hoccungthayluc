@@ -205,10 +205,23 @@
         body.dark .quick-subject-chip { background: #334155; color: #94A3B8; }
 
         /* MathJax overflow & sizing */
-        .math-content { overflow-x: auto; max-width: 100%; }
-        .math-content mjx-container { overflow-x: auto; max-width: 100%; }
-        /* Prevent display math from blowing out card width */
-        mjx-container[display="true"] { margin: 0.4em auto; max-width: 100%; overflow-x: auto; }
+        .math-content { overflow: hidden; max-width: 100%; }
+        .math-content mjx-container {
+            max-width: 100%;
+            /* transform được set bởi autoFitText() */
+            transform-origin: left center;
+            display: block;
+            transition: transform 0.15s ease;
+        }
+        mjx-container[display="true"] {
+            margin: 0.3em 0;
+            max-width: 100%;
+            overflow: visible; /* cho phép scale mà không clip */
+        }
+        /* Inline math: không scale, để font-size tự xử lý */
+        mjx-container:not([display="true"]) {
+            display: inline-block !important;
+        }
 
         /* Input hint badge */
         .math-hint { font-size: 11px; color: #9CA3AF; margin-top: 4px; }
@@ -2212,19 +2225,24 @@ const utils = {
     },
 
     // Set innerHTML of el, then typeset with MathJax if needed
-    setMath(el, text) {
-        if (!el) return;
-        // Escape HTML first so <>&" in non-math text are safe
-        const escaped = text
+    setMath(el, text, afterFit=null) {
+        if (!el) return Promise.resolve();
+        const escaped = (text||'')
             .replace(/&/g,'&amp;')
             .replace(/</g,'&lt;')
             .replace(/>/g,'&gt;')
             .replace(/\n/g,'<br>');
         el.classList.add('math-content');
         el.innerHTML = escaped;
-        if (utils.hasMath(text) && window.MathJax && MathJax.typesetPromise) {
-            MathJax.typesetPromise([el]).catch(()=>{});
+        if (utils.hasMath(text||'') && window.MathJax && MathJax.typesetPromise) {
+            // Chạy afterFit SAU khi MathJax render xong
+            return MathJax.typesetPromise([el]).then(() => {
+                if (afterFit) afterFit(el);
+            }).catch(() => { if (afterFit) afterFit(el); });
         }
+        // Không có công thức → chạy ngay
+        if (afterFit) requestAnimationFrame(() => afterFit(el));
+        return Promise.resolve();
     },
 
     // Live preview for add/edit forms
@@ -2961,12 +2979,8 @@ const app = {
         document.getElementById('review-topic-label').innerText=`${item.subjectName} › ${item.topicName}`;
 
         // Card content
-        utils.setMath(document.getElementById('review-front-text'), item.card.front);
-        utils.setMath(document.getElementById('review-back-text'),  item.card.back);
-        setTimeout(() => {
-            autoFitText(document.getElementById('review-front-text'), 42, 12);
-            autoFitText(document.getElementById('review-back-text'),  38, 12);
-        }, 60);
+        utils.setMath(document.getElementById('review-front-text'), item.card.front, el => autoFitText(el, 42, 12));
+        utils.setMath(document.getElementById('review-back-text'),  item.card.back,  el => autoFitText(el, 38, 12));
 
         // Update easy days label
         const easyDays=SRS.nextInterval(item.card,5);
@@ -3151,12 +3165,8 @@ const app = {
         const card = State.studyCards[idx];
         const total= State.studyCards.length;
 
-        utils.setMath(document.getElementById('study-front-text'), card.front);
-        utils.setMath(document.getElementById('study-back-text'),  card.back);
-        setTimeout(() => {
-            autoFitText(document.getElementById('study-front-text'), 44, 12);
-            autoFitText(document.getElementById('study-back-text'),  38, 12);
-        }, 60);
+        utils.setMath(document.getElementById('study-front-text'), card.front, el => autoFitText(el, 44, 12));
+        utils.setMath(document.getElementById('study-back-text'),  card.back,  el => autoFitText(el, 38, 12));
         document.getElementById('study-progress').innerText=`${idx+1} / ${total}`;
         document.getElementById('study-progress-bar').style.width=`${Math.round((idx/total)*100)}%`;
 
@@ -4859,10 +4869,46 @@ app.gsToggleAutoLoad = function() {
 // ═══════════════════════════════════════════
 function autoFitText(el, maxPx=42, minPx=11) {
     if (!el) return;
-    el.style.fontSize = maxPx + 'px';
-    // Reduce font-size until text fits container height
-    while (el.scrollHeight > el.parentElement.clientHeight - 48 && parseFloat(el.style.fontSize) > minPx) {
+
+    const parent = el.closest('.card-front, .card-back, .card-detail-face') || el.parentElement;
+    const maxH = (parent ? parent.clientHeight : 200) - 52; // trừ label + padding
+
+    // Ước lượng cỡ chữ ban đầu dựa vào số ký tự (tránh vòng lặp quá dài)
+    const rawLen = (el.textContent || '').length;
+    const startPx = rawLen > 300 ? Math.min(maxPx, 14) :
+                    rawLen > 150 ? Math.min(maxPx, 18) :
+                    rawLen > 80  ? Math.min(maxPx, 24) :
+                    rawLen > 40  ? Math.min(maxPx, 30) : maxPx;
+
+    el.style.fontSize = startPx + 'px';
+
+    // Giảm dần font-size cho đến khi vừa chiều cao
+    let tries = 0;
+    while (el.scrollHeight > maxH && parseFloat(el.style.fontSize) > minPx && tries < 80) {
         el.style.fontSize = (parseFloat(el.style.fontSize) - 1) + 'px';
+        tries++;
+    }
+
+    // Scale MathJax containers tràn ngang (display math dài)
+    el.querySelectorAll('mjx-container').forEach(mjx => {
+        // Reset trước
+        mjx.style.transform = '';
+        mjx.style.transformOrigin = '';
+        mjx.style.display = 'block';
+        const avail = el.clientWidth || parent?.clientWidth || 300;
+        const actual = mjx.scrollWidth;
+        if (actual > avail && avail > 0) {
+            const ratio = avail / actual;
+            mjx.style.transform = `scale(${ratio.toFixed(3)})`;
+            mjx.style.transformOrigin = 'left center';
+        }
+    });
+
+    // Kiểm tra lại sau khi scale MathJax
+    tries = 0;
+    while (el.scrollHeight > maxH && parseFloat(el.style.fontSize) > minPx && tries < 20) {
+        el.style.fontSize = (parseFloat(el.style.fontSize) - 1) + 'px';
+        tries++;
     }
 }
 
@@ -4876,13 +4922,11 @@ const cardDetail = {
 
         // Front
         const frontEl = document.getElementById('cdm-front-text');
-        utils.setMath(frontEl, card.front || '');
-        setTimeout(() => autoFitText(frontEl, 40, 12), 80);
+        utils.setMath(frontEl, card.front || '', el => autoFitText(el, 40, 12));
 
         // Back
         const backEl = document.getElementById('cdm-back-text');
-        utils.setMath(backEl, card.back || '');
-        setTimeout(() => autoFitText(backEl, 40, 12), 80);
+        utils.setMath(backEl, card.back || '', el => autoFitText(el, 40, 12));
 
         // Note
         const noteWrap = document.getElementById('cdm-note-wrap');
