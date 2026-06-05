@@ -76,6 +76,32 @@
         .screen-hidden { opacity:0; pointer-events:none; position:absolute; top:0; left:0; width:100%; height:100%; transform:scale(0.96); z-index:-1; }
         .screen-active { opacity:1; pointer-events:auto; position:relative; transform:scale(1); z-index:10; }
 
+        /* ══ BỐ CỤC: ép tất cả trong 1 khung max-w-md ══ */
+        html, body { overflow-x: hidden; }
+        #app-container {
+            overflow: hidden !important;
+            max-width: 448px !important;  /* = max-w-md */
+        }
+        #main-area {
+            overflow-x: hidden !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box;
+        }
+        /* Tất cả screen phải vừa khung */
+        #main-area > div {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        /* Grid và flex con không được tràn */
+        .screen-active { max-width: 100%; }
+        .screen-active .grid,
+        .screen-active .flex,
+        .screen-active > * { min-width: 0; max-width: 100%; }
+        /* Bottom nav đúng chiều rộng */
+        #bottom-nav { max-width: 448px !important; }
+
         #toast { visibility:hidden; min-width:220px; background:#1f2937; color:#fff; text-align:center; border-radius:12px; padding:11px 16px; position:fixed; z-index:300; left:50%; bottom:90px; transform:translateX(-50%); font-size:13px; box-shadow:0 10px 25px rgba(0,0,0,0.25); }
         #toast.show { visibility:visible; animation:fadein 0.4s,fadeout 0.4s 2.4s; }
         @keyframes fadein { from{bottom:70px;opacity:0} to{bottom:90px;opacity:1} }
@@ -330,11 +356,21 @@
             background: rgba(0,0,0,0.06); border: none; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             transition: all 0.2s; color: #6B7280; z-index: 5;
+            flex-shrink: 0;
         }
         .tts-btn-card:hover { background: rgba(99,102,241,0.15); color: #4F46E5; }
         .tts-btn-card.speaking { background: #4F46E5; color: white; }
         body.dark .tts-btn-card { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
         body.dark .tts-btn-card:hover { background: rgba(99,102,241,0.3); color: white; }
+        /* Khi nhiều nút TTS nằm cạnh nhau trong .tts-group → dùng flex, không absolute */
+        .tts-group {
+            position: absolute; top: 6px; right: 6px;
+            display: flex; flex-direction: row; gap: 4px; z-index: 5;
+        }
+        .tts-group .tts-btn-card {
+            position: static !important;   /* bỏ absolute, để flex tự sắp xếp */
+            top: auto !important; right: auto !important;
+        }
 
         /* Sound wave animation when speaking */
         @keyframes soundWave {
@@ -363,6 +399,24 @@
         }
         .sfx-correct { animation: correctFlash 0.5s ease-out; }
         .sfx-wrong   { animation: wrongShake 0.4s ease-in-out; }
+
+        /* ── Nút đọc tiếng Trung ── */
+        [data-zh-target], [title*="Trung"] {
+            font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        .tts-btn-card[data-zh-target],
+        .tts-btn-card[title*="Trung"] {
+            background: rgba(220,38,38,0.08);
+            color: #DC2626;
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .tts-btn-card[data-zh-target]:hover,
+        .tts-btn-card[title*="Trung"]:hover { background: rgba(220,38,38,0.18); }
+        .tts-btn-card[data-zh-target].speaking,
+        .tts-btn-card[title*="Trung"].speaking { background: #DC2626; color: white; }
+        body.dark .tts-btn-card[data-zh-target],
+        body.dark .tts-btn-card[title*="Trung"] { background: rgba(248,113,113,0.15); color: #F87171; }
 
         /* ── Card detail modal ── */
         #card-detail-modal { animation: searchFadeIn 0.2s ease; }
@@ -472,9 +526,14 @@
             <div class="px-4 pb-3">
                 <div class="card-detail-face front mb-3" id="cdm-front-wrap">
                     <span class="absolute top-3 left-3 text-[9px] font-black text-indigo-400 uppercase tracking-widest">Mặt trước</span>
-                    <button onclick="app.ttsReadEl('cdm-front-text')" class="tts-btn-card absolute top-2 right-2" title="Đọc">
-                        <i class="fas fa-volume-up text-xs"></i>
-                    </button>
+                    <div class="tts-group">
+                        <button onclick="app.ttsReadEl('cdm-front-text')" class="tts-btn-card" title="Đọc tiếng Anh (EN)">
+                            <i class="fas fa-volume-up text-xs"></i>
+                        </button>
+                        <button onclick="app.ttsReadZh('cdm-front-text')" class="tts-btn-card" data-zh-target="cdm-front-text" title="Đọc tiếng Trung (中文)" style="font-size:11px;font-weight:700">
+                            中
+                        </button>
+                    </div>
                     <div id="cdm-front-text" class="autofit-text font-bold text-indigo-900 math-content w-full mt-2" style="color:var(--text)"></div>
                 </div>
                 <!-- Back card -->
@@ -543,7 +602,7 @@
     </div>
 
     <!-- Main -->
-    <main class="flex-1 relative overflow-y-auto no-scrollbar" id="main-area" style="background-color:var(--bg); padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px))">
+    <main class="flex-1 relative overflow-y-auto no-scrollbar" id="main-area" style="background-color:var(--bg); padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px)); overflow-x:hidden; width:100%; max-width:100%">
 
         <!-- ═══════════════════════════════════
              SCREEN: HOME
@@ -688,9 +747,14 @@
                 <div id="review-card-inner" class="w-full h-full relative transform-style-3d flashcard-inner rounded-2xl shadow-2xl">
                     <div class="card-front absolute w-full h-full backface-hidden bg-white rounded-2xl flex flex-col items-center justify-center p-6 text-center border-4 border-indigo-100">
                         <span class="absolute top-4 left-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Câu hỏi</span>
-                        <button class="tts-btn-card" id="tts-review-front" onclick="event.stopPropagation();app.ttsReadEl('review-front-text')" title="Đọc tiếng Anh">
-                            <i class="fas fa-volume-up text-xs"></i>
-                        </button>
+                        <div class="absolute top-3 right-3 flex gap-1" onclick="event.stopPropagation()">
+                            <button class="tts-btn-card" id="tts-review-front" onclick="app.ttsReadEl('review-front-text')" title="Đọc tiếng Anh (EN)">
+                                <i class="fas fa-volume-up text-xs"></i>
+                            </button>
+                            <button class="tts-btn-card" id="tts-review-front-zh" data-zh-target="review-front-text" onclick="app.ttsReadZh('review-front-text')" title="Đọc tiếng Trung (中文)" style="font-size:11px;font-weight:700">
+                                中
+                            </button>
+                        </div>
                         <p id="review-front-text" class="font-bold text-gray-800 break-words w-full math-content autofit-text" style="font-size:42px;max-height:55%">...</p>
                         <p class="absolute bottom-4 text-xs text-gray-400"><i class="fas fa-hand-pointer mr-1"></i>Chạm để xem đáp án</p>
                     </div>
@@ -766,9 +830,70 @@
         </div>
 
         <!-- ═══════════════════════════════════
+             SCREEN: CHAPTER DETAIL
+        ════════════════════════════════════ -->
+        <div id="screen-chapter-detail" class="screen-transition screen-hidden p-4 flex flex-col">
+            <div class="surface rounded-xl shadow-sm p-4 mb-3 border border-theme">
+                <div class="flex items-start justify-between gap-2 mb-1">
+                    <h2 id="chapter-name" class="text-xl font-bold text-main flex-1">Tên Chương</h2>
+                    <div class="flex gap-1.5 shrink-0 mt-0.5">
+                        <button onclick="app.renameChapter()"
+                            class="text-xs font-semibold px-2 py-1 rounded-lg border border-theme surface2 text-sub hover:text-main transition">
+                            <i class="fas fa-pen text-[10px]"></i>
+                        </button>
+                        <button onclick="app.deleteChapter()"
+                            class="text-xs font-semibold px-2 py-1 rounded-lg border border-red-200 text-red-400 hover:bg-red-50 transition">
+                            <i class="fas fa-trash-alt text-[10px]"></i>
+                        </button>
+                    </div>
+                </div>
+                <p id="chapter-subject-name" class="text-sm text-sub mb-3">Môn: ...</p>
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="relative w-14 h-14 shrink-0">
+                        <svg class="w-14 h-14" viewBox="0 0 36 36">
+                            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#E5E7EB" stroke-width="3"/>
+                            <circle id="chapter-progress-ring" class="progress-ring-circle" cx="18" cy="18" r="15.9" fill="none" stroke="#4F46E5" stroke-width="3" stroke-dasharray="100 100" stroke-dashoffset="100" stroke-linecap="round"/>
+                        </svg>
+                        <span id="chapter-mastery-pct" class="absolute inset-0 flex items-center justify-center text-xs font-bold text-indigo-600">0%</span>
+                    </div>
+                    <div class="flex-1 grid grid-cols-2 gap-2 text-sm">
+                        <div class="bg-indigo-50 rounded-lg p-2 text-center"><p class="font-bold text-indigo-600" id="chap-td-total">0</p><p class="text-xs text-sub">Tổng thẻ</p></div>
+                        <div class="bg-green-50 rounded-lg p-2 text-center"><p class="font-bold text-emerald-600" id="chap-td-mastered">0</p><p class="text-xs text-sub">Thuộc</p></div>
+                        <div class="bg-orange-50 rounded-lg p-2 text-center"><p class="font-bold text-orange-500" id="chap-td-due">0</p><p class="text-xs text-sub">Cần ôn</p></div>
+                        <div class="bg-gray-50 rounded-lg p-2 text-center"><p class="font-bold text-gray-500" id="chap-td-new">0</p><p class="text-xs text-sub">Mới</p></div>
+                    </div>
+                </div>
+                <button onclick="app.addLesson()" class="w-full py-2.5 surface border-2 border-dashed border-indigo-300 text-indigo-500 rounded-xl font-medium hover:bg-indigo-50 transition flex items-center justify-center gap-2 text-sm">
+                    <i class="fas fa-plus"></i> Thêm Bài mới vào Chương này
+                </button>
+            </div>
+            <h3 class="font-semibold text-main text-sm mb-2">Danh sách Bài (<span id="chapter-lesson-count">0</span>)</h3>
+            <div id="chapter-lessons-list" class="space-y-2 pb-4"></div>
+        </div>
+
+        <!-- ═══════════════════════════════════
              SCREEN: TOPIC DETAIL
         ════════════════════════════════════ -->
         <div id="screen-topic-detail" class="screen-transition screen-hidden p-4 flex flex-col">
+            <!-- Breadcrumb & quản lý bài -->
+            <div id="topic-mgmt-bar" class="hidden mb-2 flex items-center justify-between gap-2">
+                <p id="topic-breadcrumb" class="text-xs text-sub truncate flex-1"></p>
+                <div class="flex gap-1.5 shrink-0">
+                    <button onclick="app.renameCurrentTopic()"
+                        class="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-theme surface2 text-sub hover:text-main transition">
+                        <i class="fas fa-pen text-[10px]"></i> Đổi tên
+                    </button>
+                    <button onclick="app.addSiblingLesson()"
+                        class="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-indigo-300 text-indigo-500 hover:bg-indigo-50 transition">
+                        <i class="fas fa-plus text-[10px]"></i> Mục con
+                    </button>
+                    <button onclick="app.deleteCurrentLesson()"
+                        class="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition">
+                        <i class="fas fa-trash-alt text-[10px]"></i> Xoá bài
+                    </button>
+                </div>
+            </div>
+
             <div class="surface rounded-xl shadow-sm p-4 mb-3 border border-theme">
                 <h2 id="current-topic-name" class="text-xl font-bold text-main">Tên Chủ Đề</h2>
                 <p id="current-subject-name" class="text-sm text-sub mb-3">Môn: ...</p>
@@ -934,9 +1059,15 @@
                         <!-- Front -->
                         <div class="card-front absolute w-full h-full backface-hidden bg-white rounded-2xl flex flex-col items-center justify-center px-5 py-4 text-center border-4 border-indigo-100">
                             <span class="absolute top-2.5 left-3 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Mặt Trước</span>
-                            <button class="tts-btn-card" id="tts-study-front" onclick="event.stopPropagation();app.ttsRead('front')" title="Đọc tiếng Anh">
-                                <i class="fas fa-volume-up text-xs"></i>
-                            </button>
+                            <!-- Nút TTS: tiếng Anh + tiếng Trung -->
+                            <div class="tts-group" onclick="event.stopPropagation()">
+                                <button class="tts-btn-card" id="tts-study-front" onclick="app.ttsRead('front')" title="Đọc tiếng Anh (EN)">
+                                    <i class="fas fa-volume-up text-xs"></i>
+                                </button>
+                                <button class="tts-btn-card" id="tts-study-front-zh" data-zh-target="study-front-text" onclick="app.ttsReadZh('study-front-text')" title="Đọc tiếng Trung (中文)" style="font-size:11px;font-weight:700">
+                                    中
+                                </button>
+                            </div>
                             <div id="study-front-text" class="font-bold text-gray-800 break-words w-full math-content autofit-text leading-snug" style="font-size:44px;max-height:130px">Câu hỏi</div>
                             <p class="absolute bottom-2 text-[10px] text-sub flip-hint flex items-center gap-1">
                                 <i class="fas fa-hand-pointer"></i>Chạm hoặc <span class="kbd">Space</span>
@@ -1180,7 +1311,7 @@
         <!-- ═══════════════════════════════════
              SCREEN: TIPS
         ════════════════════════════════════ -->
-        <div id="screen-tips" class="screen-transition screen-hidden p-4 pb-8 no-scrollbar overflow-y-auto">
+        <div id="screen-tips" class="screen-transition screen-hidden p-4 pb-6">
 
             <div class="mb-5">
                 <h2 class="text-xl font-black text-main mb-1">💡 Học hiệu quả hơn</h2>
@@ -1449,10 +1580,10 @@
             </div>
 
             <!-- Activity chart -->
-            <div class="surface rounded-2xl shadow-sm border border-theme p-4 mb-4">
+            <div class="surface rounded-2xl shadow-sm border border-theme p-4 mb-4" style="overflow:hidden;min-width:0">
                 <h3 class="font-bold text-main mb-3 text-sm">Hoạt động 7 ngày</h3>
-                <div id="activity-chart" class="flex items-end gap-2 h-20"></div>
-                <div id="activity-labels" class="flex gap-2 mt-1"></div>
+                <div id="activity-chart" class="flex items-end gap-2 h-20" style="width:100%;min-width:0;overflow:hidden"></div>
+                <div id="activity-labels" class="flex gap-2 mt-1" style="width:100%;min-width:0"></div>
             </div>
 
             <!-- Subject stats -->
@@ -1738,7 +1869,7 @@
         <!-- ═══════════════════════════════════
              SCREEN: AI PROMPT GENERATOR
         ════════════════════════════════════ -->
-        <div id="screen-ai-prompt" class="screen-transition screen-hidden p-4 pb-6 no-scrollbar overflow-y-auto">
+        <div id="screen-ai-prompt" class="screen-transition screen-hidden p-4 pb-6">
 
             <!-- Header -->
             <div class="bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl p-4 mb-4 text-white shadow-lg">
@@ -2028,8 +2159,18 @@ const BADGES = [
     { id:'xp_500',       icon:'👑', name:'Huyền thoại',desc:'Đạt 500 XP',               check:(g)=>g.xp>=500 },
 ];
 
-function totalCards(d) { return d.reduce((a,s)=>a+s.topics.reduce((b,t)=>b+t.cards.length,0),0); }
-function masteredCards(d) { return d.reduce((a,s)=>a+s.topics.reduce((b,t)=>b+t.cards.filter(c=>SRS.isMastered(c)).length,0),0); }
+function totalCards(d) {
+  return d.reduce((a,s) => a + s.topics.reduce((b,t) => {
+    if (t.subtopics && t.subtopics.length) return b + t.subtopics.reduce((c,st) => c + st.cards.length, 0);
+    return b + t.cards.length;
+  }, 0), 0);
+}
+function masteredCards(d) {
+  return d.reduce((a,s) => a + s.topics.reduce((b,t) => {
+    if (t.subtopics && t.subtopics.length) return b + t.subtopics.reduce((c,st) => c + st.cards.filter(c=>SRS.isMastered(c)).length, 0);
+    return b + t.cards.filter(c=>SRS.isMastered(c)).length;
+  }, 0), 0);
+}
 
 // ═══════════════════════════════════════════════════════════
 //  STATE
@@ -2037,7 +2178,7 @@ function masteredCards(d) { return d.reduce((a,s)=>a+s.topics.reduce((b,t)=>b+t.
 const State = {
     data: [], game: {}, settings: {},
     currentScreen: 'home', activeTab: 'home',
-    currentSubjectId: null, currentTopicId: null,
+    currentSubjectId: null, currentTopicId: null, currentChapterId: null,
     studyCards: [], currentCardIndex: 0, isFlipped: false,
     studyMode: 'anki',          // 'anki' | 'browse' | 'new'
     ankiRatings: [],            // rating per card index: 0=unrated,1=again,2=hard,3=good,4=easy
@@ -2090,6 +2231,17 @@ const SRS = {
         return Math.round((card.interval||1) * (card.ef||2.5));
     }
 };
+
+// ─── Helper: find current topic (handles lessons inside chapters) ──────────
+function getCurrentTopic() {
+    const subject = State.data.find(s=>s.id===State.currentSubjectId);
+    if (!subject) return null;
+    if (State.currentChapterId) {
+        const chap = subject.topics.find(t=>t.id===State.currentChapterId);
+        return (chap?.subtopics||[]).find(l=>l.id===State.currentTopicId) || null;
+    }
+    return subject.topics.find(t=>t.id===State.currentTopicId) || null;
+}
 
 // ═══════════════════════════════════════════════════════════
 //  UTILITIES
@@ -2262,9 +2414,14 @@ const utils = {
 
     getDueCount() {
         let count = 0;
-        State.data.forEach(s => s.topics.forEach(t => t.cards.forEach(c => {
-            if (SRS.isDue(c) && !SRS.isMastered(c)) count++;
-        })));
+        State.data.forEach(s => s.topics.forEach(topic => {
+            const leaves = (topic.subtopics && topic.subtopics.length) ? topic.subtopics : [topic];
+            leaves.forEach(leaf => {
+                leaf.cards.forEach(c => {
+                    if (SRS.isDue(c) && !SRS.isMastered(c)) count++;
+                });
+            });
+        }));
         return count;
     }
 };
@@ -2273,7 +2430,7 @@ const utils = {
 //  UI
 // ═══════════════════════════════════════════════════════════
 const ui = {
-    screens: ['home','review','review-done','topic-detail','study-flashcard','study-quiz','study-fill','quiz-result','tips','stats','settings','ai-prompt'],
+    screens: ['home','review','review-done','chapter-detail','topic-detail','study-flashcard','study-quiz','study-fill','quiz-result','tips','stats','settings','ai-prompt'],
 
     switchScreen(id, title='Ghi nhớ thần tốc', showBack=false) {
         ui.screens.forEach(s => {
@@ -2341,11 +2498,105 @@ const ui = {
         // Subjects list is now rendered by lib.render() — called via ui.renderHome override
     },
 
+    // ─── CHAPTER DETAIL ──────────────────────
+    renderChapterDetail() {
+        const sub  = State.data.find(s=>s.id===State.currentSubjectId);
+        if (!sub) return;
+        const chap = sub.topics.find(t=>t.id===State.currentChapterId);
+        if (!chap) return;
+        const lessons = chap.subtopics || [];
+
+        const total    = lessons.reduce((a,l)=>a+l.cards.length,0);
+        const mastered = lessons.reduce((a,l)=>a+l.cards.filter(c=>SRS.isMastered(c)).length,0);
+        const due      = lessons.reduce((a,l)=>a+l.cards.filter(c=>SRS.isDue(c)&&!SRS.isMastered(c)).length,0);
+        const pct      = total>0?Math.round((mastered/total)*100):0;
+
+        const nameEl = document.getElementById('chapter-name');
+        const subEl  = document.getElementById('chapter-subject-name');
+        const pctEl  = document.getElementById('chapter-mastery-pct');
+        const ringEl = document.getElementById('chapter-progress-ring');
+        const tdtEl  = document.getElementById('chap-td-total');
+        const tdmEl  = document.getElementById('chap-td-mastered');
+        const tddEl  = document.getElementById('chap-td-due');
+        const tdnEl  = document.getElementById('chap-td-new');
+        const countEl= document.getElementById('chapter-lesson-count');
+
+        if (nameEl) nameEl.textContent = chap.name;
+        if (subEl)  subEl.textContent  = `Môn: ${sub.name}`;
+        if (pctEl)  pctEl.textContent  = pct + '%';
+        if (ringEl) ringEl.style.strokeDashoffset = 100 - pct;
+        if (tdtEl)  tdtEl.textContent  = total;
+        if (tdmEl)  tdmEl.textContent  = mastered;
+        if (tddEl)  tddEl.textContent  = due;
+        if (tdnEl)  tdnEl.textContent  = total - mastered;
+        if (countEl) countEl.textContent = lessons.length;
+
+        const list = document.getElementById('chapter-lessons-list');
+        if (!list) return;
+        list.innerHTML = '';
+
+        if (lessons.length === 0) {
+            list.innerHTML = '<p class="text-sm text-sub text-center py-4">Chưa có bài nào. Hãy thêm bài mới!</p>';
+            return;
+        }
+
+        lessons.forEach(lesson => {
+            const lt = lesson.cards.length;
+            const lm = lesson.cards.filter(c=>SRS.isMastered(c)).length;
+            const ld = lesson.cards.filter(c=>SRS.isDue(c)&&!SRS.isMastered(c)).length;
+            const lp = lt>0?Math.round((lm/lt)*100):0;
+            const barColor = lp>=80?'#10B981':lp>=40?'#3B82F6':'#6366F1';
+
+            const div = document.createElement('div');
+            div.className = 'surface rounded-xl border border-theme p-3 flex items-center gap-3 cursor-pointer hover:border-indigo-300 transition shadow-sm';
+            div.onclick = () => app.openLesson(sub.id, chap.id, lesson.id);
+            div.innerHTML = `
+              <div class="w-1.5 h-10 rounded-full flex-shrink-0" style="background:${barColor};opacity:${lp>0?1:0.3}"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 mb-1">
+                  <p class="text-sm font-semibold text-main truncate">${lesson.name}</p>
+                  ${ld>0?`<span class="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full" style="background:rgba(245,158,11,0.15);color:#D97706">⏰${ld}</span>`:''}
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 rounded-full h-1.5 overflow-hidden" style="background:var(--border)">
+                    <div class="h-1.5 rounded-full transition-all" style="width:${lp}%;background:${barColor}"></div>
+                  </div>
+                  <span class="text-[10px] text-sub flex-shrink-0">${lm}/${lt}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0" onclick="event.stopPropagation()">
+                <button onclick="app.deleteLesson('${sub.id}','${chap.id}','${lesson.id}')" class="text-sub p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 transition text-xs">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+                <i class="fas fa-chevron-right text-sub text-xs"></i>
+              </div>`;
+            list.appendChild(div);
+        });
+    },
+
     // ─── TOPIC DETAIL ────────────────────────
     renderTopicDetail() {
         const subject = State.data.find(s=>s.id===State.currentSubjectId);
-        const topic = subject.topics.find(t=>t.id===State.currentTopicId);
+        // If inside a chapter (lesson), look up in subtopics
+        let topic;
+        if (State.currentChapterId) {
+            const chap = subject.topics.find(t=>t.id===State.currentChapterId);
+            topic = (chap?.subtopics||[]).find(l=>l.id===State.currentTopicId);
+        } else {
+            topic = subject.topics.find(t=>t.id===State.currentTopicId);
+        }
         if (!topic) return;
+
+        // Hiện/ẩn thanh quản lý bài (chỉ hiện khi trong Chương)
+        const mgmtBar   = document.getElementById('topic-mgmt-bar');
+        const breadcrumb = document.getElementById('topic-breadcrumb');
+        if (State.currentChapterId) {
+            const chap = subject.topics.find(t=>t.id===State.currentChapterId);
+            if (mgmtBar)    mgmtBar.classList.remove('hidden');
+            if (breadcrumb) breadcrumb.textContent = `${subject.name} › ${chap?.name || ''} › ${topic.name}`;
+        } else {
+            if (mgmtBar) mgmtBar.classList.add('hidden');
+        }
 
         document.getElementById('current-topic-name').innerText = topic.name;
         document.getElementById('current-subject-name').innerText = `Môn: ${subject.name}`;
@@ -2445,8 +2696,8 @@ const ui = {
         ssEl.innerHTML='';
         if (State.data.length===0) { ssEl.innerHTML='<p class="text-sm text-sub">Chưa có dữ liệu.</p>'; }
         State.data.forEach(subject=>{
-            const total=subject.topics.reduce((a,t)=>a+t.cards.length,0);
-            const mastered=subject.topics.reduce((a,t)=>a+t.cards.filter(c=>SRS.isMastered(c)).length,0);
+            const total=subject.topics.reduce((a,t)=>{ if(t.subtopics&&t.subtopics.length) return a+t.subtopics.reduce((b,st)=>b+st.cards.length,0); return a+t.cards.length; },0);
+            const mastered=subject.topics.reduce((a,t)=>{ if(t.subtopics&&t.subtopics.length) return a+t.subtopics.reduce((b,st)=>b+st.cards.filter(c=>SRS.isMastered(c)).length,0); return a+t.cards.filter(c=>SRS.isMastered(c)).length; },0);
             const pct=total>0?Math.round((mastered/total)*100):0;
             const row=document.createElement('div');
             row.innerHTML=`
@@ -2512,11 +2763,18 @@ const ui = {
             let sugg=State.data.map(s=>s.name);
             ['Tiếng Anh','Lịch Sử','Khoa Học','IT','Toán Học','Hóa Học'].forEach(d=>{ if(!sugg.includes(d)) sugg.push(d); });
             qc.innerHTML=sugg.slice(0,6).map(s=>`<span onclick="document.getElementById('input-subject').value='${s}';document.getElementById('input-topic').focus();" class="text-xs bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-600 px-2 py-1 rounded-full cursor-pointer transition border border-indigo-100">${s}</span>`).join('');
+        } else if (type==='chapter') {
+            document.getElementById('modal-title').innerText='Thêm Chương mới';
+            qc.classList.add('hidden');
+            inp.classList.add('hidden'); sel.classList.remove('hidden');
+            if (subjectId) sel.value=subjectId;
+            document.getElementById('modal-create').dataset.createType='chapter';
         } else {
             document.getElementById('modal-title').innerText='Thêm Chủ đề mới';
             qc.classList.add('hidden');
             inp.classList.add('hidden'); sel.classList.remove('hidden');
             if (subjectId) sel.value=subjectId;
+            document.getElementById('modal-create').dataset.createType='topic';
         }
         setTimeout(()=>{ if(!inp.classList.contains('hidden')) inp.focus(); else document.getElementById('input-topic').focus(); },100);
     },
@@ -2528,8 +2786,7 @@ const ui = {
     },
 
     showEditCardModal(cardId) {
-        const subject=State.data.find(s=>s.id===State.currentSubjectId);
-        const topic=subject.topics.find(t=>t.id===State.currentTopicId);
+        const topic=getCurrentTopic();
         const card=topic.cards.find(c=>c.id===cardId);
         if (!card) return;
         document.getElementById('edit-card-id').value=cardId;
@@ -2612,7 +2869,19 @@ const app = {
         ui.renderHome();
 
         document.getElementById('back-btn').addEventListener('click', () => {
-            if (State.currentScreen==='topic-detail') { ui.switchToTab('home'); }
+            if (State.currentScreen==='topic-detail') {
+                if (State.currentChapterId) {
+                    // came from a lesson inside a chapter → go back to chapter
+                    State.currentTopicId = null;
+                    ui.renderChapterDetail();
+                    const sub = State.data.find(s=>s.id===State.currentSubjectId);
+                    const chap = sub?.topics.find(t=>t.id===State.currentChapterId);
+                    ui.switchScreen('chapter-detail', chap?.name || 'Chương', true);
+                } else {
+                    ui.switchToTab('home');
+                }
+            }
+            else if (State.currentScreen==='chapter-detail') { ui.switchToTab('home'); }
             else if (['study-flashcard','study-quiz','study-fill'].includes(State.currentScreen)) { app.backToTopic(); }
             else if (['review','review-done'].includes(State.currentScreen)) { ui.switchToTab('home'); }
         });
@@ -2626,21 +2895,39 @@ const app = {
         const subName=inp.classList.contains('hidden')?'':inp.value.trim();
         const subId=sel.classList.contains('hidden')?null:sel.value;
 
+        const createType = document.getElementById('modal-create').dataset.createType || 'topic';
+        const isChapter = createType === 'chapter';
         if (!subName && !subId) { utils.showToast('Vui lòng nhập tên môn học!'); return; }
         if (subName && !subId) {
             const ex=State.data.find(s=>s.name.toLowerCase()===subName.toLowerCase());
             if (ex) {
-                if (topVal) { ex.topics.push({id:utils.genId('top'),name:topVal,cards:[]}); utils.showToast('Đã thêm chủ đề!','success'); }
-                else { utils.showToast('Môn đã tồn tại! Hãy thêm tên chủ đề.'); return; }
+                if (topVal) {
+                    const newTopic = isChapter
+                        ? {id:utils.genId('chap'),name:topVal,cards:[],subtopics:[]}
+                        : {id:utils.genId('top'),name:topVal,cards:[]};
+                    ex.topics.push(newTopic);
+                    utils.showToast(isChapter?'Đã thêm chương!':'Đã thêm chủ đề!','success');
+                } else { utils.showToast('Môn đã tồn tại! Hãy thêm tên chủ đề.'); return; }
             } else {
                 const ns={id:utils.genId('sub'),name:subName,topics:[]};
-                if (topVal) ns.topics.push({id:utils.genId('top'),name:topVal,cards:[]});
+                if (topVal) {
+                    const newTopic = isChapter
+                        ? {id:utils.genId('chap'),name:topVal,cards:[],subtopics:[]}
+                        : {id:utils.genId('top'),name:topVal,cards:[]};
+                    ns.topics.push(newTopic);
+                }
                 State.data.push(ns);
                 utils.showToast('Đã tạo môn học mới!','success');
             }
         } else if (subId && topVal) {
             const sub=State.data.find(s=>s.id===subId);
-            if (sub) { sub.topics.push({id:utils.genId('top'),name:topVal,cards:[]}); utils.showToast('Đã thêm chủ đề!','success'); }
+            if (sub) {
+                const newTopic = isChapter
+                    ? {id:utils.genId('chap'),name:topVal,cards:[],subtopics:[]}
+                    : {id:utils.genId('top'),name:topVal,cards:[]};
+                sub.topics.push(newTopic);
+                utils.showToast(isChapter?'Đã thêm chương!':'Đã thêm chủ đề!','success');
+            }
         } else { utils.showToast('Vui lòng nhập tên chủ đề.'); return; }
         utils.saveData(); ui.hideCreateModal(); ui.renderHome();
     },
@@ -2660,23 +2947,174 @@ const app = {
     },
 
     openTopic(subId, topId) {
-        State.currentSubjectId=subId; State.currentTopicId=topId;
+        const sub = State.data.find(s=>s.id===subId);
+        if (!sub) return;
+        const topic = sub.topics.find(t=>t.id===topId);
+        if (!topic) return;
+        State.currentSubjectId = subId;
+        if (topic.subtopics && topic.subtopics.length > 0) {
+            State.currentChapterId = topId;
+            State.currentTopicId = null;
+            ui.renderChapterDetail();
+            ui.switchScreen('chapter-detail', topic.name, true);
+        } else {
+            State.currentChapterId = null;
+            State.currentTopicId = topId;
+            ui.renderTopicDetail();
+            ui.switchScreen('topic-detail', topic.name, true);
+        }
+    },
+
+    openLesson(subId, chapterId, lessonId) {
+        const sub = State.data.find(s=>s.id===subId);
+        if (!sub) return;
+        const chap = sub.topics.find(t=>t.id===chapterId);
+        if (!chap) return;
+        const lesson = (chap.subtopics||[]).find(l=>l.id===lessonId);
+        if (!lesson) return;
+        State.currentSubjectId = subId;
+        State.currentChapterId = chapterId;
+        State.currentTopicId = lessonId;
         ui.renderTopicDetail();
-        ui.switchScreen('topic-detail','Chi tiết Chủ đề',true);
+        ui.switchScreen('topic-detail', lesson.name, true);
+    },
+
+    addLesson() {
+        const sub  = State.data.find(s=>s.id===State.currentSubjectId);
+        const chap = sub?.topics.find(t=>t.id===State.currentChapterId);
+        if (!chap) return;
+        const name = prompt('Tên Bài mới:');
+        if (!name || !name.trim()) return;
+        if (!chap.subtopics) chap.subtopics = [];
+        chap.subtopics.push({id:utils.genId('les'), name:name.trim(), cards:[]});
+        utils.saveData();
+        ui.renderChapterDetail();
+        utils.showToast('Đã thêm bài mới!', 'success');
+    },
+
+    deleteLesson(subId, chapId, lessonId) {
+        const sub  = State.data.find(s=>s.id===subId);
+        const chap = sub?.topics.find(t=>t.id===chapId);
+        if (!chap) return;
+        const lesson = (chap.subtopics||[]).find(l=>l.id===lessonId);
+        ui.showConfirm('🗑️', `Xoá bài "${lesson?.name}"?`,
+            'Tất cả thẻ trong bài này sẽ bị xoá.',
+            () => {
+                chap.subtopics = (chap.subtopics||[]).filter(l=>l.id!==lessonId);
+                utils.saveData();
+                ui.renderChapterDetail();
+                utils.showToast('Đã xoá bài.');
+            });
+    },
+
+    // Đổi tên chương hiện tại (từ chapter-detail)
+    renameChapter() {
+        const sub  = State.data.find(s=>s.id===State.currentSubjectId);
+        const chap = sub?.topics.find(t=>t.id===State.currentChapterId);
+        if (!chap) return;
+        const newName = prompt('Tên Chương mới:', chap.name);
+        if (!newName || !newName.trim() || newName.trim()===chap.name) return;
+        chap.name = newName.trim();
+        utils.saveData();
+        const el = document.getElementById('chapter-name');
+        if (el) el.textContent = chap.name;
+        ui.switchScreen('chapter-detail', chap.name, true);
+        utils.showToast('Đã đổi tên chương!', 'success');
+    },
+
+    // Xoá chương hiện tại (từ chapter-detail) → về home
+    deleteChapter() {
+        const sub  = State.data.find(s=>s.id===State.currentSubjectId);
+        const chap = sub?.topics.find(t=>t.id===State.currentChapterId);
+        if (!chap) return;
+        const totalCards = (chap.subtopics||[]).reduce((a,l)=>a+l.cards.length,0);
+        ui.showConfirm('🗑️', `Xoá chương "${chap.name}"?`,
+            `Toàn bộ ${(chap.subtopics||[]).length} bài và ${totalCards} thẻ sẽ bị xoá.`,
+            () => {
+                sub.topics = sub.topics.filter(t=>t.id!==State.currentChapterId);
+                utils.saveData();
+                State.currentChapterId = null;
+                ui.switchToTab('home');
+                utils.showToast('Đã xoá chương.');
+            });
+    },
+
+    // Xoá bài hiện tại (khi đang ở topic-detail trong 1 chương)
+    deleteCurrentLesson() {
+        if (!State.currentChapterId || !State.currentTopicId) return;
+        const sub  = State.data.find(s=>s.id===State.currentSubjectId);
+        const chap = sub?.topics.find(t=>t.id===State.currentChapterId);
+        const lesson = (chap?.subtopics||[]).find(l=>l.id===State.currentTopicId);
+        if (!lesson) return;
+        ui.showConfirm('🗑️', `Xoá bài "${lesson.name}"?`,
+            `Tất cả ${lesson.cards.length} thẻ trong bài này sẽ bị xoá vĩnh viễn.`,
+            () => {
+                chap.subtopics = chap.subtopics.filter(l=>l.id!==State.currentTopicId);
+                utils.saveData();
+                State.currentTopicId = null;
+                ui.renderChapterDetail();
+                ui.switchScreen('chapter-detail', chap.name, true);
+                utils.showToast('Đã xoá bài.');
+            });
+    },
+
+    // Đổi tên bài/chủ đề hiện tại
+    renameCurrentTopic() {
+        const sub = State.data.find(s=>s.id===State.currentSubjectId);
+        let topic;
+        if (State.currentChapterId) {
+            const chap = sub?.topics.find(t=>t.id===State.currentChapterId);
+            topic = (chap?.subtopics||[]).find(l=>l.id===State.currentTopicId);
+        } else {
+            topic = sub?.topics.find(t=>t.id===State.currentTopicId);
+        }
+        if (!topic) return;
+        const newName = prompt('Tên mới:', topic.name);
+        if (!newName || !newName.trim() || newName.trim()===topic.name) return;
+        topic.name = newName.trim();
+        utils.saveData();
+        ui.renderTopicDetail();
+        const header = document.getElementById('current-topic-name');
+        if (header) header.textContent = topic.name;
+        utils.showToast('Đã đổi tên!', 'success');
+    },
+
+    // Thêm mục con (bài mới) vào cùng chương, rồi mở bài đó
+    addSiblingLesson() {
+        if (!State.currentChapterId) return;
+        const sub  = State.data.find(s=>s.id===State.currentSubjectId);
+        const chap = sub?.topics.find(t=>t.id===State.currentChapterId);
+        if (!chap) return;
+        const name = prompt('Tên Mục con / Bài mới:');
+        if (!name || !name.trim()) return;
+        if (!chap.subtopics) chap.subtopics = [];
+        const newLesson = {id: utils.genId('les'), name: name.trim(), cards: []};
+        chap.subtopics.push(newLesson);
+        utils.saveData();
+        // Mở luôn bài mới tạo
+        app.openLesson(sub.id, chap.id, newLesson.id);
+        utils.showToast('Đã thêm mục con!', 'success');
     },
 
     backToTopic() {
-        document.onkeydown=null; // clear keyboard handler
-        ui.renderTopicDetail();
-        ui.switchScreen('topic-detail','Chi tiết Chủ đề',true);
+        document.onkeydown=null;
+        if (State.currentChapterId && State.currentTopicId) {
+            State.currentTopicId = null;
+            ui.renderChapterDetail();
+            const sub = State.data.find(s=>s.id===State.currentSubjectId);
+            const chap = sub?.topics.find(t=>t.id===State.currentChapterId);
+            ui.switchScreen('chapter-detail', chap?.name || 'Chương', true);
+        } else {
+            ui.renderTopicDetail();
+            ui.switchScreen('topic-detail','Chi tiết Chủ đề',true);
+        }
     },
 
     addFlashcard() {
         const fe=document.getElementById('new-card-front'), be=document.getElementById('new-card-back');
         const front=fe.value.trim(), back=be.value.trim();
         if (!front||!back) { utils.showToast('Vui lòng nhập cả hai mặt thẻ!'); return; }
-        const subject=State.data.find(s=>s.id===State.currentSubjectId);
-        const topic=subject.topics.find(t=>t.id===State.currentTopicId);
+        const topic=getCurrentTopic();
         topic.cards.push({id:utils.genId('card'),front,back});
         utils.saveData(); fe.value=''; be.value=''; fe.focus();
         ui.renderTopicDetail();
@@ -2687,8 +3125,7 @@ const app = {
     },
 
     deleteCard(cardId) {
-        const subject=State.data.find(s=>s.id===State.currentSubjectId);
-        const topic=subject.topics.find(t=>t.id===State.currentTopicId);
+        const topic=getCurrentTopic();
         topic.cards=topic.cards.filter(c=>c.id!==cardId);
         utils.saveData(); ui.renderTopicDetail();
         utils.showToast('Đã xoá thẻ.');
@@ -2699,8 +3136,7 @@ const app = {
         const front=document.getElementById('edit-card-front').value.trim();
         const back=document.getElementById('edit-card-back').value.trim();
         if (!front||!back) { utils.showToast('Vui lòng nhập đầy đủ!'); return; }
-        const subject=State.data.find(s=>s.id===State.currentSubjectId);
-        const topic=subject.topics.find(t=>t.id===State.currentTopicId);
+        const topic=getCurrentTopic();
         const card=topic.cards.find(c=>c.id===cardId);
         if (card) { card.front=front; card.back=back; }
         utils.saveData(); ui.hideEditCardModal(); ui.renderTopicDetail();
@@ -2782,8 +3218,7 @@ const app = {
                 const ws = wb.Sheets[wb.SheetNames[0]];         // sheet đầu tiên
                 const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
 
-                const subject = State.data.find(s=>s.id===State.currentSubjectId);
-                const topic   = subject.topics.find(t=>t.id===State.currentTopicId);
+                const topic   = getCurrentTopic();
                 let count = 0, skipped = 0;
 
                 rows.forEach((row, i) => {
@@ -2895,8 +3330,7 @@ const app = {
         const reader=new FileReader();
         reader.onload=(e)=>{
             const lines=e.target.result.split('\n');
-            const subject=State.data.find(s=>s.id===State.currentSubjectId);
-            const topic=subject.topics.find(t=>t.id===State.currentTopicId);
+            const topic=getCurrentTopic();
             let count=0;
             lines.forEach(line=>{
                 const parts=line.split(/,|;|\t/);
@@ -2946,8 +3380,7 @@ const app = {
 
     // Review from topic detail (only due cards in this topic)
     startTopicReview() {
-        const subject=State.data.find(s=>s.id===State.currentSubjectId);
-        const topic=subject.topics.find(t=>t.id===State.currentTopicId);
+        const topic=getCurrentTopic();
         const dueCards=topic.cards.filter(c=>SRS.isDue(c)&&!SRS.isMastered(c));
         if (dueCards.length===0) { utils.showToast('Không có thẻ cần ôn trong chủ đề này!'); return; }
         utils.updateStreak();
@@ -3066,8 +3499,7 @@ const app = {
 
     // ─── FLASHCARD / ANKI STUDY ──────────────
     startStudy(mode) {
-        const subject=State.data.find(s=>s.id===State.currentSubjectId);
-        const topic=subject.topics.find(t=>t.id===State.currentTopicId);
+        const topic=getCurrentTopic();
         if (topic.cards.length===0) { utils.showToast('Chưa có thẻ nào để học!'); return; }
         if (mode==='quiz') {
             if (topic.cards.length<2) { utils.showToast('Cần ít nhất 2 thẻ!'); return; }
@@ -3226,8 +3658,7 @@ const app = {
         State.ankiRatings[idx]=rating;
 
         // Update SRS on real card
-        const subject=State.data.find(s=>s.id===State.currentSubjectId);
-        const topic=subject.topics.find(t=>t.id===State.currentTopicId);
+        const topic=getCurrentTopic();
         const studyCard=State.studyCards[idx];
         const card=topic.cards.find(c=>c.id===studyCard.id);
         if (card) {
@@ -3774,6 +4205,66 @@ const app = {
             .replace(/https?:\/\/\S+/g, '')         // xoá URL
             .replace(/\s+/g, ' ')
             .trim();
+    },
+
+    // Nhận dạng văn bản có chứa chữ Hán/Trung không
+    _hasChinese(text) {
+        return /[一-鿿㐀-䶿 0-⩭F]/.test(text || '');
+    },
+
+    // Lấy giọng zh tốt nhất (Phổ thông / zh-CN / zh-TW)
+    _getBestZhVoice() {
+        const voices = window.speechSynthesis.getVoices();
+        const zh = voices.filter(v => v.lang.startsWith('zh'));
+        if (!zh.length) return null;
+        // Ưu tiên: zh-CN (Phổ thông) > bất kỳ zh
+        const preferred = ['zh-CN','zh_CN','zh-TW','zh_TW'];
+        for (const lang of preferred) {
+            const v = zh.find(v => v.lang === lang || v.lang === lang.replace('-','_'));
+            if (v) return v;
+        }
+        return zh[0];
+    },
+
+    // Đọc tiếng Trung
+    ttsSpeakZh(text, btnEl=null) {
+        if (!window.speechSynthesis) { utils.showToast('Trình duyệt không hỗ trợ TTS'); return; }
+        const clean = (text||'').replace(/<[^>]+>/g,'').trim();
+        if (!clean) return;
+
+        if (app._ttsCurrentBtn === btnEl && window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            app._ttsSetSpeaking(false, btnEl);
+            app._ttsCurrentBtn = null;
+            return;
+        }
+        window.speechSynthesis.cancel();
+        app._ttsSetSpeaking(false, app._ttsCurrentBtn);
+
+        const utt  = new SpeechSynthesisUtterance(clean);
+        utt.lang   = 'zh-CN';
+        utt.rate   = 0.85;   // hơi chậm để rõ âm
+        utt.pitch  = 1;
+        utt.volume = 1;
+
+        const voice = app._getBestZhVoice();
+        if (voice) utt.voice = voice;
+
+        app._ttsCurrentBtn = btnEl;
+        app._ttsSetSpeaking(true, btnEl);
+        utt.onend = utt.onerror = () => {
+            app._ttsSetSpeaking(false, btnEl);
+            app._ttsCurrentBtn = null;
+        };
+        window.speechSynthesis.speak(utt);
+    },
+
+    // Đọc element bằng tiếng Trung
+    ttsReadZh(elId) {
+        const text = document.getElementById(elId)?.textContent || '';
+        const btn  = document.getElementById(elId + '-zh-btn') ||
+                     document.querySelector(`[data-zh-target="${elId}"]`);
+        app.ttsSpeakZh(text, btn);
     },
 
     // Lấy giọng en-US tốt nhất
@@ -4648,13 +5139,14 @@ const lib = {
 
     // ── Tính toán stats nhanh ──────────────────────────────
     _subjectStats(subject) {
-        let total = 0, mastered = 0, due = 0, newCards = 0;
+        let total=0, mastered=0, due=0, newCards=0;
         subject.topics.forEach(t => {
-            t.cards.forEach(c => {
-                total++;
-                if (SRS.isMastered(c))      mastered++;
-                else if (SRS.isDue(c))       due++;
-                if (!c.nextReview)           newCards++;
+            const leaves = (t.subtopics && t.subtopics.length) ? t.subtopics : [t];
+            leaves.forEach(leaf => {
+                total    += leaf.cards.length;
+                mastered += leaf.cards.filter(c=>SRS.isMastered(c)).length;
+                due      += leaf.cards.filter(c=>SRS.isDue(c)&&!SRS.isMastered(c)).length;
+                newCards += leaf.cards.filter(c=>!c.srs||c.srs.reps===0).length;
             });
         });
         const pct = total > 0 ? Math.round((mastered / total) * 100) : 0;
@@ -4752,8 +5244,11 @@ const lib = {
 
                     <!-- Actions -->
                     <div class="flex items-center gap-1 flex-shrink-0" onclick="event.stopPropagation()">
-                        <button onclick="ui.showCreateModal('topic','${subject.id}')" class="text-indigo-500 p-1.5 rounded-lg hover:bg-indigo-50 transition text-xs" title="Thêm chủ đề">
+                        <button onclick="ui.showCreateModal('topic','${subject.id}')" class="text-indigo-500 p-1.5 rounded-lg hover:bg-indigo-50 transition text-xs" title="Thêm chủ đề/bài">
                             <i class="fas fa-plus"></i>
+                        </button>
+                        <button onclick="ui.showCreateModal('chapter','${subject.id}')" class="text-purple-500 p-1.5 rounded-lg hover:bg-purple-50 transition text-xs" title="Thêm chương">
+                            <i class="fas fa-layer-group"></i>
                         </button>
                         <button onclick="app.deleteSubject('${subject.id}')" class="text-sub p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 transition text-xs">
                             <i class="fas fa-trash-alt"></i>
@@ -4776,12 +5271,40 @@ const lib = {
 
     // ── Render 1 topic row ────────────────────────────────
     _renderTopic(subject, topic) {
+        // CHAPTER: has subtopics
+        if (topic.subtopics && topic.subtopics.length > 0) {
+            const lessons = topic.subtopics;
+            const total    = lessons.reduce((a,l)=>a+l.cards.length,0);
+            const mastered = lessons.reduce((a,l)=>a+l.cards.filter(c=>SRS.isMastered(c)).length,0);
+            const due      = lessons.reduce((a,l)=>a+l.cards.filter(c=>SRS.isDue(c)&&!SRS.isMastered(c)).length,0);
+            const pct      = total>0?Math.round((mastered/total)*100):0;
+            const barColor = pct>=80?'#10B981':pct>=40?'#3B82F6':'#6366F1';
+            return `
+                <div class="lib-topic-item px-3 py-2.5 border-t border-theme flex items-center gap-3 cursor-pointer"
+                    onclick="app.openTopic('${subject.id}','${topic.id}')">
+                    <div class="w-1.5 h-10 rounded-full flex-shrink-0" style="background:${barColor};opacity:${pct>0?1:0.3}"></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <span class="text-[9px] font-black px-1.5 py-0.5 rounded shrink-0" style="background:rgba(99,102,241,0.12);color:#6366F1">CHƯƠNG</span>
+                            <p class="text-sm font-semibold text-main truncate">${lib._highlight(topic.name, lib._query)}</p>
+                            ${due>0?`<span class="flex-shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full lib-due-badge" style="background:rgba(245,158,11,0.15);color:#D97706">⏰${due}</span>`:''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex-1 rounded-full h-1.5 overflow-hidden" style="background:var(--border)">
+                                <div class="h-1.5 rounded-full transition-all" style="width:${pct}%;background:${barColor}"></div>
+                            </div>
+                            <span class="text-[10px] text-sub flex-shrink-0">${lessons.length} bài · ${mastered}/${total}</span>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-right text-sub text-xs flex-shrink-0"></i>
+                </div>`;
+        }
+        // LEAF TOPIC (existing bài/chủ đề):
         const total    = topic.cards.length;
         const mastered = topic.cards.filter(c => SRS.isMastered(c)).length;
         const due      = topic.cards.filter(c => SRS.isDue(c) && !SRS.isMastered(c)).length;
         const pct      = total > 0 ? Math.round((mastered / total) * 100) : 0;
         const barColor = pct >= 80 ? '#10B981' : pct >= 40 ? '#3B82F6' : '#6366F1';
-
         return `
             <div class="lib-topic-item px-3 py-2.5 border-t border-theme flex items-center gap-3 cursor-pointer"
                 onclick="app.openTopic('${subject.id}','${topic.id}')">
@@ -5021,9 +5544,41 @@ const search = {
         // Duyệt toàn bộ data
         (State.data || []).forEach(subj => {
             (subj.topics || []).forEach(topic => {
-                // Kiểm tra tên chủ đề
+                // Kiểm tra tên chủ đề/chương
                 const topicMatch = this._norm(subj.name).includes(nq) ||
                                    this._norm(topic.name).includes(nq);
+
+                // If chapter (has subtopics), search inside lessons
+                if (topic.subtopics && topic.subtopics.length) {
+                    topic.subtopics.forEach(lesson => {
+                        const lessonMatch = topicMatch || this._norm(lesson.name).includes(nq);
+                        (lesson.cards || []).forEach(card => {
+                            const nFront = this._norm(card.front || '');
+                            const nBack  = this._norm(card.back  || '');
+                            const nNote  = this._norm(card.note  || '');
+                            const cardMatch = nFront.includes(nq) || nBack.includes(nq) || nNote.includes(nq);
+                            if (cardMatch) {
+                                results.cards.push({
+                                    subjectName: subj.name,
+                                    topicName:   topic.name + ' › ' + lesson.name,
+                                    topicId:     lesson.id,
+                                    subjectId:   subj.id,
+                                    card
+                                });
+                            }
+                        });
+                        if (lessonMatch && !results.topics.find(t => t.topicId === lesson.id)) {
+                            results.topics.push({
+                                subjectName: subj.name,
+                                topicName:   topic.name + ' › ' + lesson.name,
+                                topicId:     lesson.id,
+                                subjectId:   subj.id,
+                                cardCount:   (lesson.cards || []).length
+                            });
+                        }
+                    });
+                    return;
+                }
 
                 (topic.cards || []).forEach(card => {
                     const nFront = this._norm(card.front || '');
