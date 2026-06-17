@@ -74,28 +74,29 @@
 
         .screen-transition { transition:opacity 0.25s ease, transform 0.25s ease; }
         .screen-hidden { opacity:0; pointer-events:none; position:absolute; top:0; left:0; width:100%; height:100%; transform:scale(0.96); z-index:-1; }
-        .screen-active { opacity:1; pointer-events:auto; position:relative; transform:scale(1); z-index:10; }
+        /* Tất cả screen-active dùng absolute để width luôn chính xác */
+        .screen-active {
+            opacity:1; pointer-events:auto; transform:scale(1); z-index:10;
+            position:absolute; top:0; left:0; width:100%;
+            min-height:100%; overflow-y:auto; overflow-x:hidden;
+            /* Chừa khoảng cho bottom-nav */
+            padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px));
+            box-sizing: border-box;
+        }
 
         /* ══ BỐ CỤC: ép tất cả trong 1 khung max-w-md ══ */
         html, body { overflow-x: hidden; }
         #app-container {
             overflow: hidden !important;
-            max-width: 448px !important;  /* = max-w-md */
+            max-width: 448px !important;
         }
         #main-area {
-            overflow-x: hidden !important;
+            overflow: hidden !important;   /* screens tự scroll bên trong */
             width: 100% !important;
             max-width: 100% !important;
             box-sizing: border-box;
         }
-        /* Tất cả screen phải vừa khung */
-        #main-area > div {
-            width: 100%;
-            max-width: 100%;
-            box-sizing: border-box;
-        }
         /* Grid và flex con không được tràn */
-        .screen-active { max-width: 100%; }
         .screen-active .grid,
         .screen-active .flex,
         .screen-active > * { min-width: 0; max-width: 100%; }
@@ -144,7 +145,7 @@
         body.dark .card-front p, body.dark .card-back p,
         body.dark .card-front div, body.dark .card-back div { color:#F1F5F9 !important; }
         body.dark #study-front-text, body.dark #study-back-text,
-        body.dark #review-front-text, body.dark #review-back-text { color:#F1F5F9 !important; }
+        body.dark .card-front p, body.dark .card-back p { color:#F1F5F9 !important; }
         /* Labels on cards */
         body.dark .card-front span[class*="text-gray"],
         body.dark .card-back  span[class*="text-gray"],
@@ -445,28 +446,12 @@
         #search-results mark { font-style:normal; }
         .active\:scale-98:active { transform: scale(0.98); }
 
-        /* ── Màn hình học phải fill đúng kích thước container ── */
-        /* position:absolute + inset:0 bên trong #main-area (position:relative)
-           đảm bảo màn hình luôn đúng kích thước bất kể overflow:auto của cha */
-        #screen-study-flashcard.screen-active,
-        #screen-review.screen-active {
-            position: absolute !important;
-            top: 0; left: 0; width: 100%;
-            /* Trừ nav height để không bị che bởi fixed nav */
+        /* ── Flashcard: chiều cao cố định, không scroll ── */
+        #screen-study-flashcard.screen-active {
             height: calc(100% - 52px - env(safe-area-inset-bottom, 0px));
-            z-index: 10;
-            overflow: hidden;
-            transform: scale(1) !important;
-            opacity: 1 !important;
-        }
-        /* screen-review cần scroll bên trong khi nội dung dài */
-        #screen-review.screen-active {
-            overflow-y: auto;
-        }
-        /* Khi màn hình học active, ẩn padding-bottom của main-area */
-        #main-area:has(#screen-study-flashcard.screen-active),
-        #main-area:has(#screen-review.screen-active) {
-            overflow: hidden;
+            min-height: unset;
+            overflow: hidden !important;
+            padding-bottom: 0 !important;
         }
 
         /* ═══ AI PROMPT BUILDER ═══ */
@@ -602,7 +587,7 @@
     </div>
 
     <!-- Main -->
-    <main class="flex-1 relative overflow-y-auto no-scrollbar" id="main-area" style="background-color:var(--bg); padding-bottom: calc(52px + env(safe-area-inset-bottom, 0px)); overflow-x:hidden; width:100%; max-width:100%">
+    <main class="flex-1 relative no-scrollbar" id="main-area" style="background-color:var(--bg); overflow:hidden; width:100%; max-width:100%">
 
         <!-- ═══════════════════════════════════
              SCREEN: HOME
@@ -721,112 +706,6 @@
             <div id="lib-results-info" class="hidden text-xs text-sub mb-2 px-1"></div>
 
             <div id="subjects-list" class="space-y-2 pb-4"></div>
-        </div>
-
-        <!-- ═══════════════════════════════════
-             SCREEN: SRS REVIEW SESSION
-        ════════════════════════════════════ -->
-        <div id="screen-review" class="screen-transition screen-hidden p-5 flex flex-col items-center" style="background-color:var(--bg)">
-
-            <!-- Progress bar top -->
-            <div class="w-full mb-5">
-                <div class="flex justify-between text-sub text-xs mb-1">
-                    <span id="review-progress-text">0 / 0</span>
-                    <span id="review-queue-remaining"></span>
-                </div>
-                <div class="surface2 rounded-full h-2 overflow-hidden border border-theme">
-                    <div id="review-progress-bar" class="bg-indigo-500 h-2 rounded-full transition-all duration-500" style="width:0%"></div>
-                </div>
-            </div>
-
-            <!-- Topic label -->
-            <p id="review-topic-label" class="text-sub text-xs mb-3 self-start px-1"></p>
-
-            <!-- 3D Card -->
-            <div class="w-full max-w-sm perspective-1000 cursor-pointer mb-5" style="aspect-ratio:3/4" onclick="ui.flipReviewCard()">
-                <div id="review-card-inner" class="w-full h-full relative transform-style-3d flashcard-inner rounded-2xl shadow-2xl">
-                    <div class="card-front absolute w-full h-full backface-hidden bg-white rounded-2xl flex flex-col items-center justify-center p-6 text-center border-4 border-indigo-100">
-                        <span class="absolute top-4 left-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Câu hỏi</span>
-                        <div class="absolute top-3 right-3 flex gap-1" onclick="event.stopPropagation()">
-                            <button class="tts-btn-card" id="tts-review-front" onclick="app.ttsReadEl('review-front-text')" title="Đọc tiếng Anh (EN)">
-                                <i class="fas fa-volume-up text-xs"></i>
-                            </button>
-                            <button class="tts-btn-card" id="tts-review-front-zh" data-zh-target="review-front-text" onclick="app.ttsReadZh('review-front-text')" title="Đọc tiếng Trung (中文)" style="font-size:11px;font-weight:700">
-                                中
-                            </button>
-                        </div>
-                        <p id="review-front-text" class="font-bold text-gray-800 break-words w-full math-content autofit-text" style="font-size:42px;max-height:55%">...</p>
-                        <p class="absolute bottom-4 text-xs text-gray-400"><i class="fas fa-hand-pointer mr-1"></i>Chạm để xem đáp án</p>
-                    </div>
-                    <div class="card-back absolute w-full h-full backface-hidden bg-cyan-50 rounded-2xl flex flex-col items-center justify-center p-6 text-center border-4 border-cyan-300 rotate-y-180">
-                        <span class="absolute top-4 left-4 text-xs font-bold text-cyan-600 uppercase tracking-wider">Đáp án</span>
-                        <button class="tts-btn-card" id="tts-review-back" onclick="event.stopPropagation();app.ttsReadEl('review-back-text')" title="Đọc tiếng Anh">
-                            <i class="fas fa-volume-up text-xs"></i>
-                        </button>
-                        <p id="review-back-text" class="font-medium text-gray-800 break-words w-full math-content autofit-text" style="font-size:38px;max-height:60%">...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Rating buttons (shown after flip) -->
-            <div id="review-rating" class="hidden w-full max-w-sm">
-                <p class="text-sub text-xs text-center mb-3">Bạn nhớ thẻ này thế nào?</p>
-                <div class="grid grid-cols-3 gap-3 mb-4">
-                    <button onclick="app.rateReviewCard(1)" class="rating-hard text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition flex flex-col items-center gap-1">
-                        <span class="text-2xl">😓</span>
-                        <span class="text-xs">Khó</span>
-                        <span class="text-xs opacity-70">Ôn lại 1 ngày</span>
-                    </button>
-                    <button onclick="app.rateReviewCard(3)" class="rating-mid text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition flex flex-col items-center gap-1">
-                        <span class="text-2xl">🤔</span>
-                        <span class="text-xs">Bình thường</span>
-                        <span class="text-xs opacity-70">Ôn lại 3 ngày</span>
-                    </button>
-                    <button onclick="app.rateReviewCard(5)" class="rating-easy text-white py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition flex flex-col items-center gap-1">
-                        <span class="text-2xl">😎</span>
-                        <span class="text-xs">Dễ</span>
-                        <span class="text-xs opacity-70" id="review-easy-days">Ôn lại 7 ngày</span>
-                    </button>
-                </div>
-                <!-- Skip -->
-                <button onclick="app.skipReviewCard()" class="w-full py-2 surface2 border border-theme text-sub rounded-xl text-xs hover:opacity-80 transition">
-                    Bỏ qua thẻ này
-                </button>
-            </div>
-
-            <!-- Show answer button (before flip) -->
-            <div id="review-show-answer" class="w-full max-w-sm">
-                <button onclick="ui.flipReviewCard()" class="w-full py-3 bg-indigo-500 text-white rounded-xl font-bold shadow-lg active:scale-95 transition">
-                    Xem đáp án
-                </button>
-            </div>
-        </div>
-
-        <!-- ═══════════════════════════════════
-             SCREEN: REVIEW COMPLETE
-        ════════════════════════════════════ -->
-        <div id="screen-review-done" class="screen-transition screen-hidden p-6 flex flex-col items-center justify-center text-center" style="min-height:100%">
-            <div class="text-6xl mb-4" id="review-done-icon">🎉</div>
-            <h2 class="text-2xl font-bold text-main mb-1">Ôn tập hoàn thành!</h2>
-            <p class="text-sub text-sm mb-6" id="review-done-msg">Xuất sắc! Bạn đã ôn xong hôm nay.</p>
-            <div class="grid grid-cols-3 gap-3 w-full max-w-xs mb-6">
-                <div class="surface rounded-xl p-3 border border-theme text-center">
-                    <p class="text-xl font-black text-indigo-500" id="review-done-total">0</p>
-                    <p class="text-xs text-sub">Đã ôn</p>
-                </div>
-                <div class="surface rounded-xl p-3 border border-theme text-center">
-                    <p class="text-xl font-black text-emerald-500" id="review-done-easy">0</p>
-                    <p class="text-xs text-sub">Nhớ tốt</p>
-                </div>
-                <div class="surface rounded-xl p-3 border border-theme text-center">
-                    <p class="text-xl font-black text-yellow-500" id="review-done-xp">+0</p>
-                    <p class="text-xs text-sub">XP</p>
-                </div>
-            </div>
-            <p class="text-xs text-sub mb-6" id="review-done-next">Lần ôn tiếp theo: ngày mai</p>
-            <button onclick="ui.switchToTab('home')" class="w-full max-w-xs py-3 bg-indigo-600 text-white rounded-xl font-bold shadow hover:bg-indigo-700 transition">
-                Về trang chủ
-            </button>
         </div>
 
         <!-- ═══════════════════════════════════
@@ -1046,6 +925,8 @@
                 </div>
                 <!-- Dots (≤15 cards) -->
                 <div id="study-dots" class="flex gap-1 flex-wrap justify-center mt-2"></div>
+                <!-- Topic label (chỉ hiện trong chế độ ôn tập đa chủ đề) -->
+                <p id="study-topic-label" class="hidden text-center text-[10px] text-sub mt-1 truncate px-1"></p>
             </div>
 
             <!-- ② CARD AREA — flex:1, card luôn hiển thị đầy đủ -->
@@ -1178,7 +1059,7 @@
         <!-- ═══════════════════════════════════
              SCREEN: QUIZ
         ════════════════════════════════════ -->
-        <div id="screen-study-quiz" class="screen-transition screen-hidden p-5 flex flex-col" style="min-height:100%; background-color:var(--bg)">
+        <div id="screen-study-quiz" class="screen-transition screen-hidden p-5 flex flex-col" style="background-color:var(--bg)">
             <div class="flex justify-between items-center mb-3">
                 <span id="quiz-progress" class="font-mono bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold">Câu 1/10</span>
                 <div class="text-sm font-semibold flex gap-3">
@@ -1202,7 +1083,7 @@
         <!-- ═══════════════════════════════════
              SCREEN: FILL IN THE BLANK
         ════════════════════════════════════ -->
-        <div id="screen-study-fill" class="screen-transition screen-hidden flex flex-col" style="background:var(--bg); min-height:100%; padding:16px">
+        <div id="screen-study-fill" class="screen-transition screen-hidden flex flex-col" style="background:var(--bg); padding:16px">
 
             <!-- Progress -->
             <div class="mb-3">
@@ -1276,7 +1157,7 @@
         <!-- ═══════════════════════════════════
              SCREEN: QUIZ RESULT
         ════════════════════════════════════ -->
-        <div id="screen-quiz-result" class="screen-transition screen-hidden p-6 flex flex-col items-center justify-center text-center surface" style="min-height:100%">
+        <div id="screen-quiz-result" class="screen-transition screen-hidden p-6 flex flex-col items-center justify-center text-center surface">
             <div class="text-6xl mb-4" id="result-icon">🏆</div>
             <h2 class="text-2xl font-bold text-main mb-1">Hoàn Thành!</h2>
             <p id="result-msg" class="text-sub mb-5 text-sm">Tuyệt vời!</p>
@@ -1311,7 +1192,7 @@
         <!-- ═══════════════════════════════════
              SCREEN: TIPS
         ════════════════════════════════════ -->
-        <div id="screen-tips" class="screen-transition screen-hidden p-4 pb-6">
+        <div id="screen-tips" class="screen-transition screen-hidden p-4">
 
             <div class="mb-5">
                 <h2 class="text-xl font-black text-main mb-1">💡 Học hiệu quả hơn</h2>
@@ -1551,7 +1432,7 @@
         <!-- ═══════════════════════════════════
              SCREEN: STATS
         ════════════════════════════════════ -->
-        <div id="screen-stats" class="screen-transition screen-hidden p-4 pb-6">
+        <div id="screen-stats" class="screen-transition screen-hidden p-4">
             <div class="mb-4">
                 <h2 class="text-lg font-bold text-main mb-1">Thống kê học tập</h2>
                 <p class="text-sm text-sub">Theo dõi tiến độ của bạn</p>
@@ -1602,7 +1483,7 @@
         <!-- ═══════════════════════════════════
              SCREEN: SETTINGS
         ════════════════════════════════════ -->
-        <div id="screen-settings" class="screen-transition screen-hidden p-4 pb-6">
+        <div id="screen-settings" class="screen-transition screen-hidden p-4">
             <div class="mb-4">
                 <h2 class="text-lg font-bold text-main mb-1">Cài đặt</h2>
                 <p class="text-sm text-sub">Tuỳ chỉnh và quản lý dữ liệu</p>
@@ -1869,7 +1750,7 @@
         <!-- ═══════════════════════════════════
              SCREEN: AI PROMPT GENERATOR
         ════════════════════════════════════ -->
-        <div id="screen-ai-prompt" class="screen-transition screen-hidden p-4 pb-6">
+        <div id="screen-ai-prompt" class="screen-transition screen-hidden p-4">
 
             <!-- Header -->
             <div class="bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl p-4 mb-4 text-white shadow-lg">
@@ -2180,7 +2061,7 @@ const State = {
     currentScreen: 'home', activeTab: 'home',
     currentSubjectId: null, currentTopicId: null, currentChapterId: null,
     studyCards: [], currentCardIndex: 0, isFlipped: false,
-    studyMode: 'anki',          // 'anki' | 'browse' | 'new'
+    studyMode: 'anki',          // 'anki' | 'browse' | 'new' | 'review'
     ankiRatings: [],            // rating per card index: 0=unrated,1=again,2=hard,3=good,4=easy
     ankiAgainQueue: [],         // cards rated "again", shown again at end
     sessionXP: 0,
@@ -2357,18 +2238,22 @@ const utils = {
         const queue = [];
         State.data.forEach(subject => {
             subject.topics.forEach(topic => {
-                topic.cards.forEach(card => {
-                    if (SRS.isDue(card) && !SRS.isMastered(card)) {
-                        queue.push({
-                            card: JSON.parse(JSON.stringify(card)),
-                            subjectId: subject.id, topicId: topic.id,
-                            subjectName: subject.name, topicName: topic.name
-                        });
-                    }
+                // Walk leaves (subtopics or topic itself)
+                const leaves = (topic.subtopics && topic.subtopics.length) ? topic.subtopics : [topic];
+                leaves.forEach(leaf => {
+                    leaf.cards.forEach(card => {
+                        if (SRS.isDue(card) && !SRS.isMastered(card)) {
+                            queue.push({
+                                card: JSON.parse(JSON.stringify(card)),
+                                subjectId: subject.id, topicId: leaf.id,
+                                subjectName: subject.name, topicName: leaf.name
+                            });
+                        }
+                    });
                 });
             });
         });
-        return utils.shuffle(queue).slice(0, maxCount || 20);
+        return utils.shuffle(queue).slice(0, maxCount || 50);
     },
 
     // ── MathJax helpers ──────────────────────
@@ -2430,7 +2315,7 @@ const utils = {
 //  UI
 // ═══════════════════════════════════════════════════════════
 const ui = {
-    screens: ['home','review','review-done','chapter-detail','topic-detail','study-flashcard','study-quiz','study-fill','quiz-result','tips','stats','settings','ai-prompt'],
+    screens: ['home','chapter-detail','topic-detail','study-flashcard','study-quiz','study-fill','quiz-result','tips','stats','settings','ai-prompt'],
 
     switchScreen(id, title='Ghi nhớ thần tốc', showBack=false) {
         ui.screens.forEach(s => {
@@ -2845,13 +2730,6 @@ const ui = {
         }
     },
 
-    flipReviewCard() {
-        if (State.reviewIsFlipped) return; // already flipped
-        State.reviewIsFlipped=true;
-        document.getElementById('review-card-inner').classList.add('rotate-y-180');
-        document.getElementById('review-rating').classList.remove('hidden');
-        document.getElementById('review-show-answer').classList.add('hidden');
-    }
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -2883,7 +2761,6 @@ const app = {
             }
             else if (State.currentScreen==='chapter-detail') { ui.switchToTab('home'); }
             else if (['study-flashcard','study-quiz','study-fill'].includes(State.currentScreen)) { app.backToTopic(); }
-            else if (['review','review-done'].includes(State.currentScreen)) { ui.switchToTab('home'); }
         });
     },
 
@@ -3098,7 +2975,11 @@ const app = {
 
     backToTopic() {
         document.onkeydown=null;
-        if (State.currentChapterId && State.currentTopicId) {
+        if (State.studyMode === 'review' && !State.currentTopicId) {
+            // Review mode is cross-topic — về Home
+            State.studyMode = null;
+            ui.switchToTab('home');
+        } else if (State.currentChapterId && State.currentTopicId) {
             State.currentTopicId = null;
             ui.renderChapterDetail();
             const sub = State.data.find(s=>s.id===State.currentSubjectId);
@@ -3363,19 +3244,31 @@ const app = {
         reader.readAsText(file);
     },
 
-    // ─── SRS REVIEW SESSION ──────────────────
+    // ─── SRS REVIEW SESSION (dùng chung screen-study-flashcard) ──────────────────
     startReview() {
         const due=utils.getDueCount();
         if (due===0) { utils.showToast('Không có thẻ cần ôn hôm nay! 🎉'); return; }
         utils.updateStreak();
-        const max=State.settings.maxReview||20;
-        State.reviewQueue=utils.getDueQueue(max);
-        State.reviewIndex=0;
-        State.reviewIsFlipped=false;
-        State.reviewEasyCount=0;
-        State.reviewXP=0;
-        app.renderReviewCard();
-        ui.switchScreen('review',`Ôn tập (${State.reviewQueue.length} thẻ)`,true);
+        const max=State.settings.maxReview||50;
+        const dueItems=utils.getDueQueue(max);
+        // Gắn metadata vào từng thẻ để rateStudyCard biết tìm đúng topic
+        State.studyMode   = 'review';
+        State.studyCards  = dueItems.map(item=>({
+            ...item.card,
+            _subjectId: item.subjectId,
+            _topicId:   item.topicId,
+            _subjectName: item.subjectName,
+            _topicName:   item.topicName
+        }));
+        State.currentCardIndex = 0;
+        State.isFlipped = false;
+        State.ankiRatings = new Array(State.studyCards.length).fill(0);
+        State.ankiAgainQueue = [];
+        State.sessionXP = 0;
+        app._initStudyScreen();
+        app.renderStudyCard();
+        ui.switchScreen('study-flashcard',`🔄 Ôn tập (${State.studyCards.length} thẻ)`,true);
+        setTimeout(()=>{ app._bindSwipe(); app._bindKeys(); },200);
     },
 
     // Review from topic detail (only due cards in this topic)
@@ -3384,117 +3277,17 @@ const app = {
         const dueCards=topic.cards.filter(c=>SRS.isDue(c)&&!SRS.isMastered(c));
         if (dueCards.length===0) { utils.showToast('Không có thẻ cần ôn trong chủ đề này!'); return; }
         utils.updateStreak();
-        State.reviewQueue=utils.shuffle(dueCards).map(c=>({
-            card:JSON.parse(JSON.stringify(c)),
-            subjectId:subject.id, topicId:topic.id,
-            subjectName:subject.name, topicName:topic.name
-        }));
-        State.reviewIndex=0;
-        State.reviewIsFlipped=false;
-        State.reviewEasyCount=0;
-        State.reviewXP=0;
-        app.renderReviewCard();
-        ui.switchScreen('review',`Ôn tập chủ đề (${State.reviewQueue.length} thẻ)`,true);
-    },
-
-    renderReviewCard() {
-        const total=State.reviewQueue.length;
-        const idx=State.reviewIndex;
-        const item=State.reviewQueue[idx];
-
-        // Progress
-        const pct=Math.round((idx/total)*100);
-        document.getElementById('review-progress-bar').style.width=pct+'%';
-        document.getElementById('review-progress-text').innerText=`${idx+1} / ${total}`;
-        document.getElementById('review-queue-remaining').innerText=`Còn ${total-idx} thẻ`;
-
-        // Topic label
-        document.getElementById('review-topic-label').innerText=`${item.subjectName} › ${item.topicName}`;
-
-        // Card content
-        utils.setMath(document.getElementById('review-front-text'), item.card.front, el => autoFitText(el, 42, 12));
-        utils.setMath(document.getElementById('review-back-text'),  item.card.back,  el => autoFitText(el, 38, 12));
-
-        // Update easy days label
-        const easyDays=SRS.nextInterval(item.card,5);
-        document.getElementById('review-easy-days').innerText=`Ôn lại ${easyDays} ngày`;
-
-        // Reset flip
-        State.reviewIsFlipped=false;
-        document.getElementById('review-card-inner').classList.remove('rotate-y-180');
-        document.getElementById('review-rating').classList.add('hidden');
-        document.getElementById('review-show-answer').classList.remove('hidden');
-    },
-
-    rateReviewCard(rating) {
-        const item=State.reviewQueue[State.reviewIndex];
-
-        // Update card in actual data
-        const subject=State.data.find(s=>s.id===item.subjectId);
-        const topic=subject.topics.find(t=>t.id===item.topicId);
-        const card=topic.cards.find(c=>c.id===item.card.id);
-        if (card) { SRS.update(card,rating); }
-
-        // Stats
-        State.game.totalReviews++;
-        if (rating>=3) { State.game.totalCorrect++; State.reviewEasyCount++; }
-        State.game.totalAnswered++;
-
-        // XP: hard=2, medium=4, easy=6
-        const xpGained=rating===1?2:rating===3?4:6;
-        utils.addXP(xpGained);
-        State.reviewXP+=xpGained;
-
-        utils.saveData(); utils.saveGame();
-
-        // Next card or finish
-        if (State.reviewIndex < State.reviewQueue.length-1) {
-            State.reviewIndex++;
-            app.renderReviewCard();
-        } else {
-            app.finishReview();
-        }
-    },
-
-    skipReviewCard() {
-        if (State.reviewIndex < State.reviewQueue.length-1) {
-            State.reviewIndex++;
-            app.renderReviewCard();
-        } else {
-            app.finishReview();
-        }
-    },
-
-    finishReview() {
-        const total=State.reviewQueue.length;
-        const easy=State.reviewEasyCount;
-        const xp=State.reviewXP;
-
-        document.getElementById('review-done-total').innerText=total;
-        document.getElementById('review-done-easy').innerText=easy;
-        document.getElementById('review-done-xp').innerText='+'+xp;
-
-        const ratio=easy/total;
-        if (ratio>=0.8) {
-            document.getElementById('review-done-icon').innerText='🏆';
-            document.getElementById('review-done-msg').innerText='Xuất sắc! Bạn nhớ rất tốt!';
-            utils.celebrate();
-        } else if (ratio>=0.5) {
-            document.getElementById('review-done-icon').innerText='⭐';
-            document.getElementById('review-done-msg').innerText='Tốt lắm! Tiếp tục ôn tập nhé.';
-        } else {
-            document.getElementById('review-done-icon').innerText='📖';
-            document.getElementById('review-done-msg').innerText='Hãy ôn luyện thêm, bạn sẽ tiến bộ!';
-        }
-
-        // Next review date
-        const tomorrow=new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-        document.getElementById('review-done-next').innerText=`Ngày mai sẽ có thêm thẻ cần ôn.`;
-
-        const nb=utils.checkBadges();
-        utils.showToast(`+${xp} XP từ phiên ôn!`,'xp');
-
-        ui.switchScreen('review-done','Hoàn thành ôn tập',false);
+        State.studyMode   = 'review';
+        State.studyCards  = utils.shuffle(JSON.parse(JSON.stringify(dueCards)));
+        State.currentCardIndex = 0;
+        State.isFlipped = false;
+        State.ankiRatings = new Array(State.studyCards.length).fill(0);
+        State.ankiAgainQueue = [];
+        State.sessionXP = 0;
+        app._initStudyScreen();
+        app.renderStudyCard();
+        ui.switchScreen('study-flashcard',`🔄 Ôn chủ đề (${State.studyCards.length} thẻ)`,true);
+        setTimeout(()=>{ app._bindSwipe(); app._bindKeys(); },200);
     },
 
     // ─── FLASHCARD / ANKI STUDY ──────────────
@@ -3554,13 +3347,18 @@ const app = {
         const isAnki = State.studyMode !== 'browse';
         // Mode chips
         const chips = document.getElementById('study-mode-chips');
-        const modes = [{id:'anki',label:'🧠 Anki'},{id:'browse',label:'📖 Duyệt'},{id:'new',label:'⭐ Mới'}];
-        chips.innerHTML = modes.map(m=>`
-            <button class="mode-chip ${m.id===State.studyMode?'active':''}" onclick="app.startStudy('${m.id}')">
-                ${m.label}
-            </button>`).join('');
+        if (State.studyMode === 'review') {
+            // Review mode: chip cố định, không cho đổi sang topic mode
+            chips.innerHTML = `<span class="mode-chip active" style="cursor:default;pointer-events:none">🔄 Ôn tập hôm nay</span>`;
+        } else {
+            const modes = [{id:'anki',label:'🧠 Anki'},{id:'browse',label:'📖 Duyệt'},{id:'new',label:'⭐ Mới'}];
+            chips.innerHTML = modes.map(m=>`
+                <button class="mode-chip ${m.id===State.studyMode?'active':''}" onclick="app.startStudy('${m.id}')">
+                    ${m.label}
+                </button>`).join('');
+        }
         // Mode label
-        const labels={anki:'Again / Hard / Good / Easy', browse:'Duyệt tự do', new:'Thẻ chưa học'};
+        const labels={anki:'Again / Hard / Good / Easy', browse:'Duyệt tự do', new:'Thẻ chưa học', review:'Again / Hard / Good / Easy'};
         document.getElementById('study-mode-label').innerText = labels[State.studyMode]||'';
         // Show/hide panels
         const showAnswerBtn = document.getElementById('anki-show-answer');
@@ -3601,6 +3399,17 @@ const app = {
         utils.setMath(document.getElementById('study-back-text'),  card.back,  el => autoFitText(el, 38, 12));
         document.getElementById('study-progress').innerText=`${idx+1} / ${total}`;
         document.getElementById('study-progress-bar').style.width=`${Math.round((idx/total)*100)}%`;
+
+        // Topic label for cross-topic review mode
+        const lbl = document.getElementById('study-topic-label');
+        if (lbl) {
+            if (card._subjectName) {
+                lbl.innerText = `📚 ${card._subjectName} › ${card._topicName}`;
+                lbl.classList.remove('hidden');
+            } else {
+                lbl.classList.add('hidden');
+            }
+        }
 
         // Update rating intervals
         if (State.studyMode !== 'browse') {
@@ -3657,10 +3466,24 @@ const app = {
         const idx=State.currentCardIndex;
         State.ankiRatings[idx]=rating;
 
-        // Update SRS on real card
-        const topic=getCurrentTopic();
+        // Update SRS on real card — handle cross-topic review mode
         const studyCard=State.studyCards[idx];
-        const card=topic.cards.find(c=>c.id===studyCard.id);
+        let card;
+        if (studyCard._subjectId) {
+            // Review mode: find card by stored subjectId/topicId
+            const sub = State.data.find(s=>s.id===studyCard._subjectId);
+            let leaf = sub?.topics?.find(t=>t.id===studyCard._topicId);
+            if (!leaf) {
+                sub?.topics?.forEach(t=>{
+                    if (!leaf && t.subtopics) leaf = t.subtopics.find(st=>st.id===studyCard._topicId);
+                });
+            }
+            card = leaf?.cards?.find(c=>c.id===studyCard.id);
+        } else {
+            // Single-topic study mode
+            const topic=getCurrentTopic();
+            card = topic?.cards?.find(c=>c.id===studyCard.id);
+        }
         if (card) {
             // Map 4-btn to SM-2: again→1, hard→2, good→3, easy→5
             const srsMap={1:1,2:2,3:3,4:5};
