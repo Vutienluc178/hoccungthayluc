@@ -237,6 +237,8 @@
 
         /* ── Modal ── */
         body.dark #modal-create-content { background: #1E293B; }
+        body.dark #mc-step-1 button:hover { background: rgba(255,255,255,0.07) !important; }
+        body.dark #mc-dup-warn { background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.3); color: #FCD34D; }
         body.dark .quick-subject-chip { background: #334155; color: #94A3B8; }
 
         /* MathJax overflow & sizing */
@@ -798,6 +800,12 @@
                         <i class="fas fa-pencil-alt"></i> Điền khuyết
                     </button>
                 </div>
+                <!-- Nút Trình chiếu máy chiếu -->
+                <button onclick="app.startPresentation()" class="w-full mt-2 py-2.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 text-sm shadow-lg transition active:scale-95" style="background:linear-gradient(135deg,#0F172A,#1E3A5F)">
+                    <i class="fas fa-tv text-base"></i>
+                    <span>Trình chiếu máy chiếu</span>
+                    <span class="text-xs opacity-60 font-normal ml-1">Fullscreen</span>
+                </button>
             </div>
 
             <!-- ══ ACCORDION: Import CSV / XLSX ══ -->
@@ -1920,27 +1928,92 @@
     <!-- ═══ MODALS ═══ -->
 
     <!-- Create Subject/Topic -->
-    <div id="modal-create" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
-        <div class="surface w-full max-w-sm rounded-2xl p-6 shadow-2xl transform scale-95 transition-transform" id="modal-create-content">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-main" id="modal-title">Tạo mới</h3>
-                <button onclick="ui.hideCreateModal()" class="text-sub hover:text-main"><i class="fas fa-times text-xl"></i></button>
+    <div id="modal-create" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)ui.hideCreateModal()">
+        <div class="surface w-full max-w-sm rounded-2xl shadow-2xl transform scale-95 transition-transform overflow-hidden" id="modal-create-content">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-theme">
+                <div class="flex items-center gap-2">
+                    <button id="mc-back-btn" onclick="ui._mcShowStep(1)" class="hidden w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 text-sub hover:text-main transition">
+                        <i class="fas fa-arrow-left text-xs"></i>
+                    </button>
+                    <h3 class="text-base font-bold text-main" id="modal-title">Tạo mới</h3>
+                </div>
+                <button onclick="ui.hideCreateModal()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-sub hover:text-main transition">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-xs font-semibold text-sub mb-1">Tên Môn học</label>
-                    <input type="text" id="input-subject" placeholder="VD: Tiếng Anh, Lịch Sử..." class="w-full px-3 py-2 border border-theme rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none text-sm surface text-main">
-                    <div id="quick-subjects" class="mt-2 flex flex-wrap gap-1.5"></div>
-                    <select id="select-subject" class="hidden w-full px-3 py-2 border border-theme rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none mt-2 text-sm surface text-main">
-                        <option value="">-- Chọn môn học có sẵn --</option>
-                    </select>
+
+            <!-- BƯỚC 1: Chọn loại -->
+            <div id="mc-step-1" class="p-4 space-y-2">
+                <p class="text-xs text-sub font-medium mb-3">Bạn muốn tạo gì?</p>
+                <button onclick="ui._mcSetType('subject')" class="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-theme hover:border-indigo-400 surface2 hover:bg-indigo-50 transition active:scale-98 text-left group">
+                    <span class="text-2xl shrink-0">📚</span>
+                    <div class="min-w-0">
+                        <p class="font-bold text-main text-sm">Môn học mới</p>
+                        <p class="text-xs text-sub">Tiếng Anh, Toán, Lý, Hoá, Sử…</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-sub text-xs ml-auto shrink-0"></i>
+                </button>
+                <button onclick="ui._mcSetType('chapter')" class="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-theme hover:border-purple-400 surface2 hover:bg-purple-50 transition active:scale-98 text-left">
+                    <span class="text-2xl shrink-0">📂</span>
+                    <div class="min-w-0">
+                        <p class="font-bold text-main text-sm">Chương mới</p>
+                        <p class="text-xs text-sub">Nhóm nhiều bài học theo chương</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-sub text-xs ml-auto shrink-0"></i>
+                </button>
+                <button onclick="ui._mcSetType('topic')" class="w-full flex items-center gap-3 p-3.5 rounded-xl border-2 border-theme hover:border-emerald-400 surface2 hover:bg-emerald-50 transition active:scale-98 text-left">
+                    <span class="text-2xl shrink-0">📝</span>
+                    <div class="min-w-0">
+                        <p class="font-bold text-main text-sm">Bài học / Chủ đề</p>
+                        <p class="text-xs text-sub">Thêm thẻ flashcard trực tiếp</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-sub text-xs ml-auto shrink-0"></i>
+                </button>
+            </div>
+
+            <!-- BƯỚC 2: Form chi tiết -->
+            <div id="mc-step-2" class="hidden p-4 space-y-3">
+
+                <!-- Form cho Môn học -->
+                <div id="mc-form-subject" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-sub mb-1.5">Tên môn học <span class="text-red-400">*</span></label>
+                        <input type="text" id="input-subject" placeholder="VD: Tiếng Anh, Toán Học…"
+                            class="w-full px-3 py-2.5 border-2 border-theme rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none text-sm surface text-main transition"
+                            oninput="ui._mcSubjectInput(this.value)">
+                        <!-- Gợi ý nhanh -->
+                        <div id="quick-subjects" class="mt-2 flex flex-wrap gap-1.5"></div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-sub mb-1.5">Chủ đề đầu tiên <span class="text-sub font-normal">(tuỳ chọn)</span></label>
+                        <input type="text" id="input-topic" placeholder="Để trống nếu chưa cần"
+                            class="w-full px-3 py-2.5 border-2 border-theme rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none text-sm surface text-main transition">
+                    </div>
+                    <!-- Cảnh báo trùng tên -->
+                    <div id="mc-dup-warn" class="hidden text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                        <i class="fas fa-exclamation-triangle mr-1"></i> Môn "<span id="mc-dup-name"></span>" đã tồn tại — sẽ thêm chủ đề vào môn này.
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-sub mb-1">Tên Chủ đề (tuỳ chọn)</label>
-                    <input type="text" id="input-topic" placeholder="VD: Từ vựng Bài 1..." class="w-full px-3 py-2 border border-theme rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none text-sm surface text-main">
+
+                <!-- Form cho Chương / Bài học -->
+                <div id="mc-form-topic" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-sub mb-1.5">Thuộc môn học <span class="text-red-400">*</span></label>
+                        <select id="select-subject" class="w-full px-3 py-2.5 border-2 border-theme rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none text-sm surface text-main">
+                            <option value="">-- Chọn môn học --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-sub mb-1.5" id="mc-name-label">Tên chủ đề <span class="text-red-400">*</span></label>
+                        <input type="text" id="input-topic-name" placeholder="VD: Chương 1, Bài 2…"
+                            class="w-full px-3 py-2.5 border-2 border-theme rounded-xl focus:ring-2 focus:ring-indigo-400 outline-none text-sm surface text-main transition">
+                    </div>
                 </div>
-                <button onclick="app.saveSubjectTopic()" class="w-full py-2.5 bg-indigo-600 text-white rounded-xl font-bold shadow hover:bg-indigo-700 transition">
-                    Lưu lại
+
+                <button onclick="app.saveSubjectTopic()" id="mc-save-btn"
+                    class="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold shadow hover:bg-indigo-700 active:scale-98 transition">
+                    <i class="fas fa-check mr-2"></i><span id="mc-save-label">Lưu lại</span>
                 </button>
             </div>
         </div>
@@ -2619,37 +2692,74 @@ const ui = {
     },
 
     // ─── MODALS ──────────────────────────────
-    showCreateModal(type, subjectId=null) {
+    showCreateModal(type='subject', subjectId=null) {
         const modal=document.getElementById('modal-create'), content=document.getElementById('modal-create-content');
-        const sel=document.getElementById('select-subject'), inp=document.getElementById('input-subject');
         modal.classList.remove('hidden'); modal.classList.add('flex');
         setTimeout(()=>{ content.classList.remove('scale-95'); content.classList.add('scale-100'); },10);
-        inp.value=''; document.getElementById('input-topic').value='';
-        inp.classList.remove('hidden'); sel.classList.add('hidden');
-        sel.innerHTML='<option value="">-- Chọn môn học có sẵn --</option>';
+        // Reset form
+        document.getElementById('input-subject').value='';
+        document.getElementById('input-topic').value='';
+        const tn=document.getElementById('input-topic-name'); if(tn) tn.value='';
+        document.getElementById('mc-dup-warn').classList.add('hidden');
+        // Populate select
+        const sel=document.getElementById('select-subject');
+        sel.innerHTML='<option value="">-- Chọn môn học --</option>';
         State.data.forEach(s=>{ sel.innerHTML+=`<option value="${s.id}">${s.name}</option>`; });
+        if (subjectId) sel.value=subjectId;
+        // If type given, skip step 1
+        if (type==='subject') { ui._mcSetType('subject'); }
+        else if (type==='chapter') { ui._mcSetType('chapter'); }
+        else if (type==='topic') { ui._mcSetType('topic'); }
+        else { ui._mcShowStep(1); }
+    },
 
-        const qc=document.getElementById('quick-subjects');
-        if (type==='subject') {
-            document.getElementById('modal-title').innerText='Tạo Môn học mới';
-            qc.classList.remove('hidden');
-            let sugg=State.data.map(s=>s.name);
-            ['Tiếng Anh','Lịch Sử','Khoa Học','IT','Toán Học','Hóa Học'].forEach(d=>{ if(!sugg.includes(d)) sugg.push(d); });
-            qc.innerHTML=sugg.slice(0,6).map(s=>`<span onclick="document.getElementById('input-subject').value='${s}';document.getElementById('input-topic').focus();" class="text-xs bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-600 px-2 py-1 rounded-full cursor-pointer transition border border-indigo-100">${s}</span>`).join('');
-        } else if (type==='chapter') {
-            document.getElementById('modal-title').innerText='Thêm Chương mới';
-            qc.classList.add('hidden');
-            inp.classList.add('hidden'); sel.classList.remove('hidden');
-            if (subjectId) sel.value=subjectId;
-            document.getElementById('modal-create').dataset.createType='chapter';
-        } else {
-            document.getElementById('modal-title').innerText='Thêm Chủ đề mới';
-            qc.classList.add('hidden');
-            inp.classList.add('hidden'); sel.classList.remove('hidden');
-            if (subjectId) sel.value=subjectId;
-            document.getElementById('modal-create').dataset.createType='topic';
+    _mcShowStep(step) {
+        document.getElementById('mc-step-1').classList.toggle('hidden', step!==1);
+        document.getElementById('mc-step-2').classList.toggle('hidden', step!==2);
+        document.getElementById('mc-back-btn').classList.toggle('hidden', step===1);
+        document.getElementById('modal-title').innerText = step===1 ? 'Tạo mới' : document.getElementById('modal-title').dataset.step2||'Tạo mới';
+    },
+
+    _mcSetType(type) {
+        const modal=document.getElementById('modal-create');
+        modal.dataset.createType = type;
+        // Title
+        const titles={subject:'📚 Môn học mới', chapter:'📂 Chương mới', topic:'📝 Bài học / Chủ đề'};
+        document.getElementById('modal-title').innerText = titles[type]||'Tạo mới';
+        document.getElementById('modal-title').dataset.step2 = titles[type]||'Tạo mới';
+        // Save btn label
+        const labels={subject:'Tạo Môn học', chapter:'Thêm Chương', topic:'Thêm Bài học'};
+        document.getElementById('mc-save-label').innerText = labels[type]||'Lưu lại';
+        // Show/hide form sections
+        document.getElementById('mc-form-subject').classList.toggle('hidden', type!=='subject');
+        document.getElementById('mc-form-topic').classList.toggle('hidden', type==='subject');
+        if (type!=='subject') {
+            document.getElementById('mc-name-label').innerText = (type==='chapter'?'Tên chương':'Tên bài học / chủ đề') + ' *';
+            document.getElementById('input-topic-name').placeholder = type==='chapter' ? 'VD: Chương 1 – Đại số…' : 'VD: Bài 1 – Từ vựng Unit 1…';
         }
-        setTimeout(()=>{ if(!inp.classList.contains('hidden')) inp.focus(); else document.getElementById('input-topic').focus(); },100);
+        // Quick subject suggestions
+        if (type==='subject') {
+            const qc=document.getElementById('quick-subjects');
+            const existing=State.data.map(s=>s.name);
+            const sugg=['Tiếng Anh','Toán Học','Vật Lý','Hóa Học','Lịch Sử','Địa Lý','Sinh Học','Tin Học'].filter(d=>!existing.includes(d));
+            const all=[...existing,...sugg].slice(0,8);
+            qc.innerHTML=all.map(s=>`<span onclick="document.getElementById('input-subject').value='${s.replace(/'/g,"\\'")}';ui._mcSubjectInput('${s.replace(/'/g,"\\'")}');document.getElementById('input-topic').focus();" class="text-xs bg-indigo-50 hover:bg-indigo-600 hover:text-white text-indigo-600 px-2.5 py-1 rounded-full cursor-pointer transition border border-indigo-100 select-none">${s}</span>`).join('');
+        }
+        ui._mcShowStep(2);
+        // Focus first input
+        setTimeout(()=>{
+            const f = type==='subject' ? document.getElementById('input-subject') : document.getElementById('input-topic-name');
+            f?.focus();
+        },120);
+    },
+
+    _mcSubjectInput(val) {
+        const warn=document.getElementById('mc-dup-warn');
+        const ex=State.data.find(s=>s.name.toLowerCase()===val.toLowerCase());
+        if (ex && val) {
+            document.getElementById('mc-dup-name').innerText=ex.name;
+            warn.classList.remove('hidden');
+        } else { warn.classList.add('hidden'); }
     },
 
     hideCreateModal() {
@@ -2754,46 +2864,44 @@ const app = {
 
     // ─── DATA ────────────────────────────────
     saveSubjectTopic() {
-        const inp=document.getElementById('input-subject');
-        const sel=document.getElementById('select-subject');
-        const topVal=document.getElementById('input-topic').value.trim();
-        const subName=inp.classList.contains('hidden')?'':inp.value.trim();
-        const subId=sel.classList.contains('hidden')?null:sel.value;
-
         const createType = document.getElementById('modal-create').dataset.createType || 'topic';
-        const isChapter = createType === 'chapter';
-        if (!subName && !subId) { utils.showToast('Vui lòng nhập tên môn học!'); return; }
-        if (subName && !subId) {
-            const ex=State.data.find(s=>s.name.toLowerCase()===subName.toLowerCase());
+        const isChapter  = createType === 'chapter';
+        const isSubject  = createType === 'subject';
+
+        if (isSubject) {
+            // ── Tạo Môn học ──
+            const subName = document.getElementById('input-subject').value.trim();
+            const topVal  = document.getElementById('input-topic').value.trim();
+            if (!subName) { utils.showToast('Vui lòng nhập tên môn học!'); return; }
+            const ex = State.data.find(s=>s.name.toLowerCase()===subName.toLowerCase());
             if (ex) {
                 if (topVal) {
-                    const newTopic = isChapter
-                        ? {id:utils.genId('chap'),name:topVal,cards:[],subtopics:[]}
-                        : {id:utils.genId('top'),name:topVal,cards:[]};
-                    ex.topics.push(newTopic);
-                    utils.showToast(isChapter?'Đã thêm chương!':'Đã thêm chủ đề!','success');
-                } else { utils.showToast('Môn đã tồn tại! Hãy thêm tên chủ đề.'); return; }
+                    ex.topics.push({id:utils.genId('top'),name:topVal,cards:[]});
+                    utils.showToast(`Đã thêm chủ đề vào môn "${ex.name}"!`,'success');
+                } else {
+                    utils.showToast(`Môn "${ex.name}" đã tồn tại!`);
+                    return;
+                }
             } else {
                 const ns={id:utils.genId('sub'),name:subName,topics:[]};
-                if (topVal) {
-                    const newTopic = isChapter
-                        ? {id:utils.genId('chap'),name:topVal,cards:[],subtopics:[]}
-                        : {id:utils.genId('top'),name:topVal,cards:[]};
-                    ns.topics.push(newTopic);
-                }
+                if (topVal) ns.topics.push({id:utils.genId('top'),name:topVal,cards:[]});
                 State.data.push(ns);
-                utils.showToast('Đã tạo môn học mới!','success');
+                utils.showToast('✅ Đã tạo môn học mới!','success');
             }
-        } else if (subId && topVal) {
-            const sub=State.data.find(s=>s.id===subId);
-            if (sub) {
-                const newTopic = isChapter
-                    ? {id:utils.genId('chap'),name:topVal,cards:[],subtopics:[]}
-                    : {id:utils.genId('top'),name:topVal,cards:[]};
-                sub.topics.push(newTopic);
-                utils.showToast(isChapter?'Đã thêm chương!':'Đã thêm chủ đề!','success');
-            }
-        } else { utils.showToast('Vui lòng nhập tên chủ đề.'); return; }
+        } else {
+            // ── Thêm Chương hoặc Bài học ──
+            const subId   = document.getElementById('select-subject').value;
+            const topName = document.getElementById('input-topic-name').value.trim();
+            if (!subId) { utils.showToast('Vui lòng chọn môn học!'); return; }
+            if (!topName) { utils.showToast('Vui lòng nhập tên ' + (isChapter?'chương':'bài học') + '!'); return; }
+            const sub = State.data.find(s=>s.id===subId);
+            if (!sub) return;
+            const newTopic = isChapter
+                ? {id:utils.genId('chap'),name:topName,cards:[],subtopics:[]}
+                : {id:utils.genId('top'),name:topName,cards:[]};
+            sub.topics.push(newTopic);
+            utils.showToast(isChapter?'✅ Đã thêm chương mới!':'✅ Đã thêm bài học mới!','success');
+        }
         utils.saveData(); ui.hideCreateModal(); ui.renderHome();
     },
 
@@ -3276,6 +3384,11 @@ const app = {
         app.renderStudyCard();
         ui.switchScreen('study-flashcard',`🔄 Ôn chủ đề (${State.studyCards.length} thẻ)`,true);
         setTimeout(()=>{ app._bindSwipe(); app._bindKeys(); },200);
+    },
+
+    // ─── PROJECTOR PRESENTATION ──────────────
+    startPresentation() {
+        present.start();
     },
 
     // ─── FLASHCARD / ANKI STUDY ──────────────
@@ -5682,6 +5795,143 @@ window.onload = () => {
     }
 };
 
+/* ===== PRESENTATION MODE ===== */
+const present = {
+    cards: [],
+    idx: 0,
+    revealed: false,
+
+    start() {
+        const topic = getCurrentTopic();
+        if (!topic) { utils.showToast('Chọn bài học trước!'); return; }
+        if (!topic.cards || topic.cards.length < 2) { utils.showToast('Cần ít nhất 2 thẻ để trình chiếu!'); return; }
+        // Build presentation cards with generated options (same logic as quiz mode)
+        const allCards = utils.shuffle(JSON.parse(JSON.stringify(topic.cards)));
+        this.cards = allCards.map((card, _, arr) => {
+            const question = card.front;
+            const correct  = card.back;
+            const others   = utils.shuffle(arr.map(c => c.back).filter(b => b !== correct));
+            let opts = [correct];
+            for (let i = 0; i < Math.min(3, others.length); i++) opts.push(others[i]);
+            opts = utils.shuffle(opts);
+            const correctIdx = opts.indexOf(correct);
+            return { question, options: opts, correctIdx, note: card.back };
+        });
+        this.idx = 0;
+        this.revealed = false;
+        this._render();
+        document.getElementById('pres-title-text').textContent = `📽 ${topic.name || 'Trình chiếu trắc nghiệm'}`;
+        const el = document.getElementById('screen-present');
+        el.classList.remove('hidden');
+        document.getElementById('main-header').style.display = 'none';
+        document.getElementById('bottom-nav').style.display = 'none';
+        if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+        document.addEventListener('keydown', present._onKey);
+    },
+
+    exit() {
+        document.getElementById('screen-present').classList.add('hidden');
+        document.getElementById('main-header').style.display = '';
+        document.getElementById('bottom-nav').style.display = '';
+        if (document.exitFullscreen && document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+        document.removeEventListener('keydown', present._onKey);
+    },
+
+    go(delta) {
+        const next = this.idx + delta;
+        if (next < 0 || next >= this.cards.length) return;
+        this.idx = next;
+        this.revealed = false;
+        this._render();
+    },
+
+    reveal() {
+        this.revealed = !this.revealed;
+        document.getElementById('pres-answer-section').classList.toggle('hidden', !this.revealed);
+        const btn = document.getElementById('pres-reveal-btn');
+        btn.textContent = this.revealed ? '🙈 Ẩn đáp án' : '👁 Hiện đáp án';
+        btn.style.background = this.revealed ? '#059669' : '#1E3A5F';
+    },
+
+    _onKey(e) {
+        if (e.key === 'Escape') { present.exit(); return; }
+        if (e.key === 'ArrowRight' || e.key === 'PageDown') { present.go(1); return; }
+        if (e.key === 'ArrowLeft'  || e.key === 'PageUp')   { present.go(-1); return; }
+        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); present.reveal(); }
+    },
+
+    _render() {
+        const card = this.cards[this.idx];
+        const total = this.cards.length;
+        const num = this.idx + 1;
+
+        // Counter
+        document.getElementById('pres-counter').textContent = `${num} / ${total}`;
+
+        // Dots (max 12 shown)
+        const dotsEl = document.getElementById('pres-dots');
+        const maxDots = Math.min(total, 15);
+        const startD = total > 15 ? Math.max(0, Math.min(this.idx - 7, total - 15)) : 0;
+        dotsEl.innerHTML = '';
+        for (let i = startD; i < startD + maxDots; i++) {
+            const d = document.createElement('span');
+            d.style.cssText = `display:inline-block;width:10px;height:10px;border-radius:50%;margin:0 3px;background:${i===this.idx?'#60A5FA':'rgba(255,255,255,0.3)'}`;
+            dotsEl.appendChild(d);
+        }
+
+        // Question
+        const qEl = document.getElementById('pres-question');
+        qEl.textContent = card.question || '';
+
+        // Options
+        const optEl = document.getElementById('pres-options');
+        optEl.innerHTML = '';
+        const labels = ['A','B','C','D','E'];
+        (card.options || []).forEach((opt, i) => {
+            const div = document.createElement('div');
+            div.className = 'pres-option';
+            const labelEl = document.createElement('span');
+            labelEl.className = 'pres-opt-label';
+            labelEl.textContent = labels[i];
+            const textEl = document.createElement('span');
+            textEl.className = 'pres-opt-text';
+            textEl.textContent = opt;
+            div.appendChild(labelEl);
+            div.appendChild(textEl);
+            optEl.appendChild(div);
+        });
+
+        // Answer
+        const correctIdx = card.correctIdx !== undefined ? card.correctIdx : 0;
+        const correctLabel = labels[correctIdx] || labels[0];
+        const correctText = (card.options || [])[correctIdx] || '';
+        document.getElementById('pres-correct-label').textContent = `✅ Đáp án: ${correctLabel}`;
+        document.getElementById('pres-correct-text').textContent = correctText;
+        const expEl = document.getElementById('pres-explanation');
+        expEl.textContent = card.note || '';
+        expEl.style.display = card.note ? '' : 'none';
+
+        // Hide answer
+        document.getElementById('pres-answer-section').classList.add('hidden');
+        const btn = document.getElementById('pres-reveal-btn');
+        btn.textContent = '👁 Hiện đáp án';
+        btn.style.background = '#1E3A5F';
+        this.revealed = false;
+
+        // Prev/Next buttons
+        document.getElementById('pres-prev-btn').style.opacity = this.idx === 0 ? '0.3' : '1';
+        document.getElementById('pres-next-btn').style.opacity = this.idx === total-1 ? '0.3' : '1';
+
+        // MathJax re-render if available (for LaTeX content)
+        if (window.MathJax && MathJax.typesetPromise) {
+            MathJax.typesetPromise([qEl, optEl]).catch(()=>{});
+        }
+    }
+};
+
+// Expose to global
+window.present = present;
+
 // Stop TTS when leaving study screen
 const _origSwitchScreen = ui.switchScreen.bind(ui);
 ui.switchScreen = function(id, title, showBack) {
@@ -5693,5 +5943,239 @@ ui.switchScreen = function(id, title, showBack) {
     _origSwitchScreen(id, title, showBack);
 };
 </script>
+
+<!-- ===== PRESENTATION MODE OVERLAY ===== -->
+<style>
+#screen-present {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #050e1a;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    font-family: inherit;
+    overflow: hidden;
+}
+#screen-present.hidden { display: none !important; }
+
+#pres-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+}
+#pres-title-text {
+    font-size: clamp(0.9rem, 2vw, 1.2rem);
+    font-weight: 700;
+    color: #93C5FD;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.85;
+}
+#pres-counter {
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    font-weight: 800;
+    color: #60A5FA;
+}
+#pres-exit-btn {
+    background: rgba(239,68,68,0.15);
+    color: #FCA5A5;
+    border: 1px solid rgba(239,68,68,0.35);
+    border-radius: 8px;
+    padding: 7px 18px;
+    font-size: clamp(0.75rem, 1.8vw, 1rem);
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: background 0.2s;
+}
+#pres-exit-btn:hover { background: rgba(239,68,68,0.3); }
+
+#pres-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(10px, 2vh, 28px) clamp(16px, 2.5vw, 40px);
+    overflow-y: auto;
+    gap: 0;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+#pres-question {
+    font-size: clamp(1.6rem, 4.5vw, 3.8rem);
+    font-weight: 800;
+    line-height: 1.3;
+    text-align: center;
+    color: #F0F9FF;
+    margin-bottom: clamp(14px, 3vh, 36px);
+    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    width: 100%;
+    max-width: 98vw;
+}
+
+#pres-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(8px, 2vh, 16px);
+    width: 100%;
+    max-width: 98vw;
+    margin-bottom: clamp(10px, 2vh, 24px);
+}
+.pres-option {
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(10px, 2vw, 18px);
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: clamp(10px, 2vw, 20px);
+    padding: clamp(12px, 2.5vh, 24px) clamp(14px, 2.5vw, 28px);
+    transition: background 0.15s;
+}
+.pres-opt-label {
+    font-size: clamp(1.3rem, 3.5vw, 2.8rem);
+    font-weight: 900;
+    color: #60A5FA;
+    min-width: clamp(28px, 5vw, 52px);
+    flex-shrink: 0;
+    line-height: 1.2;
+}
+.pres-opt-text {
+    font-size: clamp(1.1rem, 3vw, 2.4rem);
+    font-weight: 600;
+    color: #E0F2FE;
+    line-height: 1.35;
+}
+
+/* Answer section */
+#pres-answer-section {
+    width: 100%;
+    max-width: 98vw;
+    background: rgba(5, 150, 105, 0.18);
+    border: 2px solid rgba(16, 185, 129, 0.4);
+    border-radius: clamp(12px, 2vw, 22px);
+    padding: clamp(14px, 2.5vh, 28px) clamp(18px, 3vw, 36px);
+    margin-bottom: 8px;
+}
+#pres-correct-label {
+    font-size: clamp(1.2rem, 3vw, 2.6rem);
+    font-weight: 900;
+    color: #34D399;
+    margin-bottom: 8px;
+}
+#pres-correct-text {
+    font-size: clamp(1rem, 2.5vw, 2rem);
+    font-weight: 700;
+    color: #A7F3D0;
+    margin-bottom: 6px;
+}
+#pres-explanation {
+    font-size: clamp(0.85rem, 2vw, 1.6rem);
+    color: rgba(167,243,208,0.75);
+    font-style: italic;
+    line-height: 1.5;
+}
+
+/* Bottom control bar */
+#pres-controls {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(10px, 3vw, 28px);
+    padding: clamp(10px, 2vh, 20px) 24px clamp(14px, 3vh, 28px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background: rgba(0,0,0,0.3);
+}
+.pres-nav-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 50%;
+    width: clamp(44px, 8vw, 72px);
+    height: clamp(44px, 8vw, 72px);
+    font-size: clamp(1rem, 3vw, 2rem);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+    flex-shrink: 0;
+}
+.pres-nav-btn:hover { background: rgba(255,255,255,0.18); }
+.pres-nav-btn:active { transform: scale(0.92); }
+
+#pres-reveal-btn {
+    font-size: clamp(1rem, 3vw, 1.7rem);
+    font-weight: 800;
+    padding: clamp(10px, 2vh, 18px) clamp(24px, 6vw, 56px);
+    border-radius: clamp(10px, 2vw, 20px);
+    border: none;
+    cursor: pointer;
+    color: #fff;
+    background: #1E3A5F;
+    letter-spacing: 0.04em;
+    transition: background 0.2s, transform 0.1s;
+    flex: 1;
+    max-width: 500px;
+}
+#pres-reveal-btn:active { transform: scale(0.96); }
+
+#pres-dots {
+    width: 100%;
+    text-align: center;
+    padding: 6px 0 0;
+    flex-shrink: 0;
+}
+
+/* Keyboard hint */
+#pres-hint {
+    text-align: center;
+    font-size: clamp(0.65rem, 1.5vw, 0.9rem);
+    color: rgba(255,255,255,0.22);
+    padding: 2px 0 6px;
+    flex-shrink: 0;
+    letter-spacing: 0.04em;
+}
+</style>
+
+<div id="screen-present" class="hidden">
+    <!-- Top bar -->
+    <div id="pres-topbar">
+        <span id="pres-title-text">📽 Trình chiếu trắc nghiệm</span>
+        <span id="pres-counter">1 / 1</span>
+        <button id="pres-exit-btn" onclick="present.exit()">✕ Thoát (Esc)</button>
+    </div>
+
+    <!-- Main content -->
+    <div id="pres-body">
+        <div id="pres-question"></div>
+        <div id="pres-options"></div>
+        <div id="pres-answer-section" class="hidden">
+            <div id="pres-correct-label"></div>
+            <div id="pres-correct-text"></div>
+            <div id="pres-explanation"></div>
+        </div>
+    </div>
+
+    <!-- Dots -->
+    <div id="pres-dots"></div>
+
+    <!-- Controls -->
+    <div id="pres-controls">
+        <button id="pres-prev-btn" class="pres-nav-btn" onclick="present.go(-1)" title="Câu trước (←)">◀</button>
+        <button id="pres-reveal-btn" onclick="present.reveal()">👁 Hiện đáp án</button>
+        <button id="pres-next-btn" class="pres-nav-btn" onclick="present.go(1)" title="Câu tiếp (→)">▶</button>
+    </div>
+
+    <!-- Keyboard hint -->
+    <div id="pres-hint">Space / Enter = hiện đáp án &nbsp;·&nbsp; ← → = câu trước/sau &nbsp;·&nbsp; Esc = thoát</div>
+</div>
+
 </body>
 </html>
